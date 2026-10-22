@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api.dart';
+import 'profile.dart';
 
 class LeaderboardScreen extends StatelessWidget {
   final Api api;
@@ -29,6 +30,7 @@ class LeaderboardScreen extends StatelessWidget {
                   leading: SizedBox(width: 32, child: Text('${p['rank']}', style: const TextStyle(fontWeight: FontWeight.bold))),
                   title: Text(p['username']),
                   subtitle: Text('${p['games']} games'),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(api: api, username: p['username']))),
                   trailing: Text('${p['rating']}', style: Theme.of(context).textTheme.titleMedium),
                 );
               },

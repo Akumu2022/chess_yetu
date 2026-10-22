@@ -3,6 +3,10 @@
 Versions follow `pubspec.yaml` (`name+build`). Bump both parts for every release, add an entry here,
 and tag the commit `mobile-v<version>`. The version is shown at the bottom of the lobby.
 
+## 0.5.0+5
+- Arenas (tournaments): list, join or leave, live standings, and automatic pairing that opens your game.
+- Player profiles (from the leaderboard or arena standings): rating, rank, record and recent rated games.
+
 ## 0.4.0+4
 - In-game: move list in standard notation, captured pieces with the material lead, flip-board button.
 - "Play again" after a game against the computer or a friend game (same settings).

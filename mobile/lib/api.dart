@@ -150,4 +150,21 @@ class Api extends ChangeNotifier {
   /// Runs Stockfish over the finished game (cached server-side after the first time).
   Future<Map<String, dynamic>> analyze(String id) async =>
       Map<String, dynamic>.from(await _req('POST', '/review/$id/analyze'));
+
+  Future<Map<String, dynamic>> profile(String username) async =>
+      Map<String, dynamic>.from(await _req('GET', '/players/${Uri.encodeComponent(username)}'));
+
+  Future<List<dynamic>> tournaments() async => await _req('GET', '/tournaments');
+
+  Future<Map<String, dynamic>> tournament(int id) async => Map<String, dynamic>.from(await _req('GET', '/tournaments/$id'));
+
+  Future<void> joinTournament(int id) async => _req('POST', '/tournaments/$id/join');
+
+  Future<void> leaveTournament(int id) async => _req('DELETE', '/tournaments/$id/join');
+
+  /// Heartbeat plus pickup: returns the seat once the tournament has paired us, otherwise null.
+  Future<Seat?> tournamentPoll(int id) async {
+    final r = await _req('GET', '/tournaments/$id/me');
+    return r['status'] == 'matched' ? Seat.fromJson(r['seat']) : null;
+  }
 }

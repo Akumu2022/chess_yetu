@@ -10,6 +10,7 @@ import 'login.dart';
 import 'puzzle.dart';
 import 'review.dart';
 import 'settings.dart';
+import 'tournaments.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 const _levels = ['Beginner', 'Easy', 'Medium', 'Hard', 'Master'];
@@ -251,22 +252,22 @@ class _LobbyScreenState extends State<LobbyScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        Row(children: [
+        Wrap(spacing: 12, runSpacing: 8, children: [
           if (u != null)
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PuzzleScreen(api: api))),
-                icon: const Icon(Icons.extension),
-                label: const Text('Puzzles'),
-              ),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PuzzleScreen(api: api))),
+              icon: const Icon(Icons.extension),
+              label: const Text('Puzzles'),
             ),
-          if (u != null) const SizedBox(width: 12),
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LeaderboardScreen(api: api))),
-              icon: const Icon(Icons.leaderboard),
-              label: const Text('Leaderboard'),
-            ),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TournamentsScreen(api: api))),
+            icon: const Icon(Icons.emoji_events),
+            label: const Text('Arenas'),
+          ),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LeaderboardScreen(api: api))),
+            icon: const Icon(Icons.leaderboard),
+            label: const Text('Leaderboard'),
           ),
         ]),
         if (u != null) _History(api: api, key: ValueKey(u.rating)),
