@@ -1,8 +1,9 @@
 import 'package:chess/chess.dart' as ch;
 import 'package:flutter/material.dart';
 
+import 'prefs.dart';
+
 const _glyph = {'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'};
-const _light = Color(0xFFF0D9B5), _dark = Color(0xFFB58863);
 
 /// Squares from a FEN's placement field, keyed by name ("e4" -> "P" for a white pawn, "p" for black).
 Map<String, String> piecesFromFen(String fen) {
@@ -51,7 +52,9 @@ class BoardView extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ListenableBuilder(listenable: Prefs.instance, builder: (context, _) => _build(context));
+
+  Widget _build(BuildContext context) {
     final pieces = piecesFromFen(fen);
     final flip = perspective == 'black';
     return AspectRatio(
@@ -63,7 +66,7 @@ class BoardView extends StatelessWidget {
             Expanded(
               child: Row(children: [
                 for (var c = 0; c < 8; c++)
-                  Expanded(child: _square(pieces, flip ? 7 - c : c, flip ? r + 1 : 8 - r, r, c, size)),
+                  Expanded(child: _square(Prefs.instance, pieces, flip ? 7 - c : c, flip ? r + 1 : 8 - r, r, c, size)),
               ]),
             ),
         ]);
@@ -71,15 +74,15 @@ class BoardView extends StatelessWidget {
     );
   }
 
-  Widget _square(Map<String, String> pieces, int file, int rank, int row, int col, double size) {
+  Widget _square(Prefs prefs, Map<String, String> pieces, int file, int rank, int row, int col, double size) {
     final name = '${'abcdefgh'[file]}$rank';
     final isLight = (file + rank) % 2 == 1;
     final piece = pieces[name];
     final isWhite = piece != null && piece == piece.toUpperCase();
-    Color bg = isLight ? _light : _dark;
-    if (name == lastFrom || name == lastTo) bg = Color.alphaBlend(const Color(0x66FFEB3B), bg);
+    Color bg = isLight ? prefs.board.light : prefs.board.dark;
+    if (prefs.lastMove && (name == lastFrom || name == lastTo)) bg = Color.alphaBlend(const Color(0x66FFEB3B), bg);
     if (name == selected) bg = Color.alphaBlend(const Color(0x8800C853), bg);
-    final fg = isLight ? _dark : _light;
+    final fg = isLight ? prefs.board.dark : prefs.board.light;
     return Semantics(
       label: name,
       child: GestureDetector(
@@ -87,8 +90,8 @@ class BoardView extends StatelessWidget {
         child: Container(
           color: bg,
           child: Stack(alignment: Alignment.center, children: [
-            if (col == 0) Positioned(left: 2, top: 1, child: Text('$rank', style: TextStyle(fontSize: size * .2, color: fg))),
-            if (row == 7) Positioned(right: 2, bottom: 0, child: Text('abcdefgh'[file], style: TextStyle(fontSize: size * .2, color: fg))),
+            if (prefs.coords && col == 0) Positioned(left: 2, top: 1, child: Text('$rank', style: TextStyle(fontSize: size * .2, color: fg))),
+            if (prefs.coords && row == 7) Positioned(right: 2, bottom: 0, child: Text('abcdefgh'[file], style: TextStyle(fontSize: size * .2, color: fg))),
             if (piece != null)
               Text(
                 '${_glyph[piece.toLowerCase()]}︎',
@@ -101,7 +104,7 @@ class BoardView extends StatelessWidget {
                       : null,
                 ),
               ),
-            if (targets.contains(name))
+            if (prefs.hints && targets.contains(name))
               Container(
                 width: piece == null ? size * .3 : size * .9,
                 height: piece == null ? size * .3 : size * .9,

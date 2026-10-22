@@ -8,6 +8,8 @@ import 'game.dart';
 import 'leaderboard.dart';
 import 'login.dart';
 import 'puzzle.dart';
+import 'review.dart';
+import 'settings.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 const _levels = ['Beginner', 'Easy', 'Medium', 'Hard', 'Master'];
@@ -135,6 +137,11 @@ class _LobbyScreenState extends State<LobbyScreen> {
       appBar: AppBar(
         title: const Text('Chess Yetu'),
         actions: [
+          IconButton(
+            tooltip: 'Settings',
+            icon: const Icon(Icons.palette_outlined),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
+          ),
           IconButton(tooltip: 'Server address', icon: const Icon(Icons.settings_ethernet), onPressed: _server),
           if (u == null)
             TextButton(
@@ -286,6 +293,7 @@ class _History extends StatelessWidget {
                   contentPadding: EdgeInsets.zero,
                   title: Text('${_outcome(g)} · ${(g['reason'] as String).replaceAll('_', ' ')}'),
                   subtitle: Text('${g['moves']} moves as ${g['color']}'),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReviewScreen(api: api, gameId: g['id']))),
                   trailing: g['rated'] == true ? Text('${g['delta'] >= 0 ? '+' : ''}${g['delta']}') : null,
                 ),
             ]),

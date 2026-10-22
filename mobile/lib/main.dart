@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import 'api.dart';
+import 'prefs.dart';
 import 'screens/lobby.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final api = Api();
   await api.init();
+  await Prefs.instance.load();
   runApp(ChessYetuApp(api: api));
 }
 

@@ -144,4 +144,10 @@ class Api extends ChangeNotifier {
   /// `status` is wrong | continue (with the opponent's `reply`) | solved.
   Future<Map<String, dynamic>> puzzleMove(int id, List<String> played) async =>
       Map<String, dynamic>.from(await _req('POST', '/puzzles/$id/move', body: {'played': played}));
+
+  Future<Map<String, dynamic>> review(String id) async => Map<String, dynamic>.from(await _req('GET', '/review/$id'));
+
+  /// Runs Stockfish over the finished game (cached server-side after the first time).
+  Future<Map<String, dynamic>> analyze(String id) async =>
+      Map<String, dynamic>.from(await _req('POST', '/review/$id/analyze'));
 }
