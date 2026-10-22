@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Chess } from 'chess.js';
+	import { prefs } from './prefs.svelte';
 
 	let {
 		fen,
@@ -51,9 +52,39 @@
 		})
 	);
 
-	const pieces = $derived(
-		board.flat().flatMap((p) => (p ? [{ ...p, ...pos(p.square) }] : []))
-	);
+	// Each piece keeps an identity from one position to the next, so a move slides the piece
+	// from where it was to where it is instead of the piece appearing out of nowhere.
+	type Tracked = { id: number; square: string; type: string; color: string };
+	let memory: Tracked[] = [];
+	let nextId = 0;
+	const pieces = $derived.by(() => {
+		const fresh = board.flat().flatMap((p) => (p ? [{ square: p.square, type: p.type, color: p.color }] : []));
+		const same = (a: { type: string; color: string }, b: { type: string; color: string }) =>
+			a.type === b.type && a.color === b.color;
+		const used = new Set<number>();
+		const out: Tracked[] = [];
+		const moved: typeof fresh = [];
+		for (const n of fresh) {
+			const o = memory.find((m) => !used.has(m.id) && m.square === n.square && same(m, n));
+			if (o) (used.add(o.id), out.push({ ...n, id: o.id }));
+			else moved.push(n);
+		}
+		for (const n of moved) {
+			let o = memory.find(
+				(m) => !used.has(m.id) && same(m, n) && lastMove?.from === m.square && lastMove?.to === n.square
+			);
+			if (!o) {
+				// castling moves a second piece: the one unmatched rook of that colour is it
+				const olds = memory.filter((m) => !used.has(m.id) && same(m, n));
+				if (olds.length === 1 && moved.filter((q) => same(q, n)).length === 1) o = olds[0];
+			}
+			if (o) used.add(o.id);
+			out.push({ ...n, id: o ? o.id : nextId++ });
+		}
+		out.sort((a, b) => a.id - b.id); // a steady order keeps the browser from restarting the slide
+		memory = out;
+		return out.map((p) => ({ ...p, ...pos(p.square) }));
+	});
 
 	function click(name: string) {
 		if (!interactive) return;
@@ -89,7 +120,7 @@
 	const PROMO_PIECES = ['q', 'r', 'b', 'n'];
 </script>
 
-<svg viewBox="0 0 8 8" class="board" role="grid" aria-label="Chess board">
+<svg viewBox="0 0 8 8" class="board" class:animate={prefs.animate} role="grid" aria-label="Chess board">
 	{#each squares as s (s.name)}
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<rect
@@ -103,7 +134,7 @@
 			tabindex="-1"
 			onclick={() => click(s.name)}
 		/>
-		{#if lastMove && (lastMove.from === s.name || lastMove.to === s.name)}
+		{#if prefs.lastMove && lastMove && (lastMove.from === s.name || lastMove.to === s.name)}
 			<rect x={s.x} y={s.y} width="1" height="1" class="last" pointer-events="none" />
 		{/if}
 		{#if checkSquare === s.name}
@@ -114,31 +145,32 @@
 		{/if}
 	{/each}
 
-	{#each pieces as p (p.square + p.type + p.color)}
-		<text
-			x={p.x + 0.5}
-			y={p.y + 0.5}
-			class="piece {p.color}"
-			data-piece={p.color + p.type}
-			data-at={p.square}
-			text-anchor="middle"
-			dominant-baseline="central"
-			pointer-events="none">{GLYPH[p.type]}</text
-		>
+	{#each pieces as p (p.id)}
+		<g class="mover" style="transform: translate({p.x}px, {p.y}px)" pointer-events="none">
+			<text
+				x="0.5"
+				y="0.5"
+				class="piece {p.color}"
+				data-piece={p.color + p.type}
+				data-at={p.square}
+				text-anchor="middle"
+				dominant-baseline="central">{GLYPH[p.type]}</text
+			>
+		</g>
 	{/each}
 
-	{#each targets as t (t)}
+	{#each prefs.hints ? targets : [] as t (t)}
 		{@const q = pos(t)}
 		<circle cx={q.x + 0.5} cy={q.y + 0.5} r="0.16" class="hint" pointer-events="none" />
 	{/each}
 
 	{#each squares as s (s.name)}
-		{#if s.x === 0}
+		{#if prefs.coords && s.x === 0}
 			<text x="0.05" y={s.y + 0.22} class="coord {s.dark ? 'on-dark' : 'on-light'}" pointer-events="none"
 				>{s.name[1]}</text
 			>
 		{/if}
-		{#if s.y === 7}
+		{#if prefs.coords && s.y === 7}
 			<text x={s.x + 0.95} y="7.92" text-anchor="end" class="coord {s.dark ? 'on-dark' : 'on-light'}" pointer-events="none"
 				>{s.name[0]}</text
 			>
@@ -171,16 +203,16 @@
 		fill: rgba(0, 0, 0, 0.45);
 	}
 	.promo-bg {
-		fill: #2a2520;
+		fill: var(--card);
 	}
 	.choice {
 		cursor: pointer;
 	}
 	.choice-bg {
-		fill: #3a322b;
+		fill: var(--card-2);
 	}
 	.choice:hover .choice-bg {
-		fill: #f5a623;
+		fill: var(--accent);
 	}
 	.board {
 		width: 100%;
@@ -191,10 +223,10 @@
 		user-select: none;
 	}
 	.light {
-		fill: #f0d9b5;
+		fill: var(--sq-light);
 	}
 	.dark {
-		fill: #8a5a3c;
+		fill: var(--sq-dark);
 	}
 	.last {
 		fill: #f5a623;
@@ -211,18 +243,26 @@
 	.hint {
 		fill: rgba(20, 20, 20, 0.35);
 	}
+	.animate .mover {
+		transition: transform 0.28s ease-out;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.animate .mover {
+			transition: none;
+		}
+	}
 	.piece {
 		font-size: 0.86px;
 		font-family: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'DejaVu Sans', serif;
 		stroke-width: 0.03px;
 	}
 	.piece.w {
-		fill: #fdfdfd;
-		stroke: #222;
+		fill: var(--pc-w);
+		stroke: var(--pc-w-line);
 	}
 	.piece.b {
-		fill: #1c1c1c;
-		stroke: #000;
+		fill: var(--pc-b);
+		stroke: var(--pc-b-line);
 	}
 	.coord {
 		font-size: 0.22px;
@@ -230,9 +270,9 @@
 		font-weight: 700;
 	}
 	.on-dark {
-		fill: #f0d9b5;
+		fill: var(--sq-light);
 	}
 	.on-light {
-		fill: #8a5a3c;
+		fill: var(--sq-dark);
 	}
 </style>

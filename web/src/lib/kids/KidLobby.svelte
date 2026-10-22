@@ -225,19 +225,19 @@
 		display: block;
 		padding: 0.9rem 1rem;
 		border-radius: 8px;
-		background: #1b1815;
+		background: var(--inset);
 		color: inherit;
 		text-decoration: none;
 		font-weight: 600;
 	}
 	section {
-		background: #2a2520;
+		background: var(--card);
 		border-radius: 12px;
 		padding: 1rem;
 		margin-bottom: 1rem;
 	}
 	.hello {
-		background: linear-gradient(135deg, #3a2e1a, #2a2520);
+		background: linear-gradient(135deg, var(--accent-bg), var(--card));
 	}
 	h2 {
 		font-size: 1.1rem;
@@ -245,15 +245,15 @@
 	}
 	.stats {
 		margin: 0;
-		color: #cdbfae;
+		color: var(--muted-2);
 	}
 	.time {
 		margin: 6px 0 0;
 		font-weight: 700;
-		color: #8fd694;
+		color: var(--good);
 	}
 	.time.low {
-		color: #f5a623;
+		color: var(--accent-text);
 	}
 	.bots {
 		display: grid;
@@ -269,21 +269,21 @@
 		text-align: left;
 	}
 	.bot span {
-		color: #a89a8a;
+		color: var(--muted);
 		font-size: 0.9rem;
 	}
 	button {
 		padding: 0.7rem;
 		border-radius: 10px;
-		border: 1px solid #4a4038;
-		background: #1b1815;
+		border: 1px solid var(--border);
+		background: var(--inset);
 		color: inherit;
 		font-size: 1rem;
 		cursor: pointer;
 	}
 	button.primary {
-		background: #f5a623;
-		color: #1b1815;
+		background: var(--accent);
+		color: var(--on-accent);
 		border: none;
 		font-weight: 700;
 		width: 100%;
@@ -293,31 +293,31 @@
 	button.link {
 		background: none;
 		border: none;
-		color: #a89a8a;
+		color: var(--muted);
 		padding: 0;
 		text-decoration: underline;
 		font-size: 0.9rem;
 	}
 	.note .link {
-		color: #f5a623;
+		color: var(--accent-text);
 	}
 	button:disabled {
 		opacity: 0.45;
 		cursor: default;
 	}
 	.note {
-		color: #a89a8a;
+		color: var(--muted);
 		font-size: 0.9rem;
 		margin: 8px 0 0;
 	}
 	.info {
-		background: #3a322b;
-		border-left: 3px solid #f5a623;
+		background: var(--card-2);
+		border-left: 3px solid var(--accent);
 		padding: 10px 12px;
 		border-radius: 6px;
 	}
 	.err {
-		color: #ff6b6b;
+		color: var(--bad);
 	}
 	.history {
 		list-style: none;
@@ -332,13 +332,13 @@
 		grid-template-columns: 5.5rem 1fr auto;
 		gap: 8px;
 		font-size: 0.95rem;
-		color: #a89a8a;
+		color: var(--muted);
 	}
 	.res.won {
-		color: #6fcf6f;
+		color: var(--good);
 	}
 	.res.keepgoing {
-		color: #f5a623;
+		color: var(--accent-text);
 	}
 	.parent {
 		background: none;
@@ -354,8 +354,8 @@
 		min-width: 0;
 		padding: 0.6rem;
 		border-radius: 8px;
-		border: 1px solid #4a4038;
-		background: #1b1815;
+		border: 1px solid var(--border);
+		background: var(--inset);
 		color: inherit;
 		font-size: 1rem;
 	}

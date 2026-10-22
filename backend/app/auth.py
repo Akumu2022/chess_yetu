@@ -28,7 +28,7 @@ def load_or_create_secret(path: Path = SECRET_FILE) -> str:
 
 # In production set JWT_SECRET instead (e.g. from your secrets manager).
 SECRET = os.environ.get("JWT_SECRET") or load_or_create_secret()
-TOKEN_TTL_S = 30 * 24 * 3600
+TOKEN_TTL_S = 30 * 24 * 3600  # signed out automatically after 30 days
 KID_TOKEN_TTL_S = 12 * 3600  # a kids session ends on its own
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,24}$")
 

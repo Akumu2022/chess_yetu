@@ -42,3 +42,10 @@ export function materialDiff(fen: string): number {
 	}
 	return diff;
 }
+
+const FIGURINE: Record<string, string> = { K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘' };
+
+/** Standard notation with the piece letter shown as the piece itself: Nf3 becomes ♘f3, e8=Q becomes e8=♕. */
+export function figurine(san: string): string {
+	return san.replace(/^[KQRBN]/, (c) => FIGURINE[c]).replace(/=([QRBN])/, (_, c) => '=' + FIGURINE[c]);
+}

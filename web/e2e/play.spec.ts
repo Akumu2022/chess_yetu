@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { move, newPlayer, open, piece, register, sq, startFriendGame, trackPageErrors } from './helpers';
+import { move, openMoves, newPlayer, open, piece, register, sq, startFriendGame, trackPageErrors } from './helpers';
 
 trackPageErrors();
 
@@ -56,8 +56,8 @@ test('captured pieces are shown for each side, with the material lead', async ({
 	}
 
 	// the move list uses standard notation
-	await a.page.locator('.movelist summary').click();
-	await expect(a.page.locator('.moves li')).toHaveText(['1. e4', 'd5', '2. exd5', 'Qxd5']);
+	await openMoves(a.page);
+	await expect(a.page.locator('.moves li')).toHaveText(['1. e4', 'd5', '2. exd5', '♕xd5']);
 	await a.ctx.close();
 	await b.ctx.close();
 });
@@ -109,8 +109,8 @@ test('pawn promotion shows a picker and the chosen piece reaches the opponent', 
 
 	await expect(piece(a.page, 'g8', 'wn')).toHaveCount(1);
 	await expect(piece(b.page, 'g8', 'wn')).toHaveCount(1);
-	await b.page.locator('.movelist summary').click();
-	await expect(b.page.locator('.moves li').last()).toContainText('hxg8=N'); // readable notation, not raw f6g7
+	await openMoves(b.page);
+	await expect(b.page.locator('.moves li').last()).toContainText('hxg8=♘'); // readable notation, not raw f6g7
 	await a.ctx.close();
 	await b.ctx.close();
 });

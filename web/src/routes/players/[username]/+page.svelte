@@ -55,7 +55,7 @@
 		padding: 1rem 16px 3rem;
 	}
 	.back {
-		color: #a89a8a;
+		color: var(--muted);
 		text-decoration: none;
 	}
 	h1 {
@@ -70,7 +70,7 @@
 		gap: 8px;
 	}
 	.cards div {
-		background: #2a2520;
+		background: var(--card);
 		border-radius: 8px;
 		padding: 0.7rem;
 		display: flex;
@@ -79,11 +79,11 @@
 	}
 	.cards b {
 		font-size: 1.4rem;
-		color: #f5a623;
+		color: var(--accent-text);
 	}
 	.cards span,
 	.muted {
-		color: #a89a8a;
+		color: var(--muted);
 		font-size: 0.85rem;
 	}
 	.record {
@@ -91,11 +91,11 @@
 	}
 	.w,
 	.win {
-		color: #6fcf6f;
+		color: var(--good);
 	}
 	.l,
 	.loss {
-		color: #ff6b6b;
+		color: var(--bad);
 	}
 	ul {
 		list-style: none;
@@ -111,6 +111,6 @@
 		font-size: 0.9rem;
 	}
 	.err {
-		color: #ff6b6b;
+		color: var(--bad);
 	}
 </style>

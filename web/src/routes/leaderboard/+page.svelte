@@ -46,7 +46,7 @@
 		padding: 1rem 16px 3rem;
 	}
 	.back {
-		color: #a89a8a;
+		color: var(--muted);
 		text-decoration: none;
 	}
 	h1 {
@@ -54,7 +54,7 @@
 	}
 	.sub,
 	.muted {
-		color: #a89a8a;
+		color: var(--muted);
 	}
 	ol {
 		list-style: none;
@@ -68,28 +68,28 @@
 		grid-template-columns: 2rem 1fr auto 3.5rem;
 		gap: 8px;
 		align-items: center;
-		background: #2a2520;
+		background: var(--card);
 		border-radius: 8px;
 		padding: 0.6rem 0.8rem;
 	}
 	li[data-rank='1'] {
-		border-left: 4px solid #f5a623;
+		border-left: 4px solid var(--accent);
 	}
 	.rank {
-		color: #a89a8a;
+		color: var(--muted);
 	}
 	.games {
-		color: #a89a8a;
+		color: var(--muted);
 		font-size: 0.8rem;
 	}
 	.rating {
 		text-align: right;
-		color: #f5a623;
+		color: var(--accent-text);
 	}
 	a {
 		color: inherit;
 	}
 	.err {
-		color: #ff6b6b;
+		color: var(--bad);
 	}
 </style>

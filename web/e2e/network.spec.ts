@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { move, piece, startFriendGame, trackPageErrors } from './helpers';
+import { move, openMoves, piece, startFriendGame, trackPageErrors } from './helpers';
 import { startLagProxy, type LagProxy } from './netproxy';
 
 trackPageErrors();
@@ -54,8 +54,8 @@ test('game completes with 500 ms latency and three forced disconnects', async ({
 	await move(b.page, 'd8', 'h4');
 	await expect(b.page.getByText('You won by checkmate')).toBeVisible({ timeout: 15_000 });
 	await expect(a.page.getByText('You lost by checkmate')).toBeVisible({ timeout: 15_000 });
-	await a.page.locator('.movelist summary').click();
-	await expect(a.page.locator('.moves li')).toHaveText(['1. f3', 'e5', '2. g4', 'Qh4#']);
+	await openMoves(a.page);
+	await expect(a.page.locator('.moves li')).toHaveText(['1. f3', 'e5', '2. g4', '♕h4#']);
 
 	await a.ctx.close();
 	await b.ctx.close();

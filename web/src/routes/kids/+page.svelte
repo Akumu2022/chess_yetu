@@ -57,19 +57,19 @@
 		margin: 0;
 	}
 	.tag {
-		color: #a89a8a;
+		color: var(--muted);
 		margin: 0.25rem 0 1.5rem;
 	}
 	.back {
-		color: #f5a623;
+		color: var(--accent-text);
 		text-decoration: none;
 	}
 	.lead,
 	.muted {
-		color: #a89a8a;
+		color: var(--muted);
 	}
 	.intro {
-		background: #2a2520;
+		background: var(--card);
 		border-radius: 12px;
 		padding: 1rem;
 	}
@@ -82,13 +82,13 @@
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
-		color: #cdbfae;
+		color: var(--muted-2);
 	}
 	.cta {
 		display: block;
 		text-align: center;
-		background: #f5a623;
-		color: #1b1815;
+		background: var(--accent);
+		color: var(--on-accent);
 		font-weight: 700;
 		padding: 0.8rem;
 		border-radius: 8px;

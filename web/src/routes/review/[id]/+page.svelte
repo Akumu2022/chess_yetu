@@ -149,10 +149,10 @@
 
 			<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
 			<svg class="graph" viewBox="0 0 {GW} {GH}" preserveAspectRatio="none" onclick={graphClick} role="img" aria-label="Evaluation graph">
-				<rect width={GW} height={GH} fill="#2a2520" />
-				<line x1="0" x2={GW} y1={GH / 2} y2={GH / 2} stroke="#4a4038" />
-				<path d={path} fill="none" stroke="#f5a623" stroke-width="2" vector-effect="non-scaling-stroke" />
-				<line x1={(ply / (total || 1)) * GW} x2={(ply / (total || 1)) * GW} y1="0" y2={GH} stroke="#fff" opacity="0.6" />
+				<rect width={GW} height={GH} fill="var(--card)" />
+				<line x1="0" x2={GW} y1={GH / 2} y2={GH / 2} stroke="var(--border)" />
+				<path d={path} fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke" />
+				<line x1={(ply / (total || 1)) * GW} x2={(ply / (total || 1)) * GW} y1="0" y2={GH} stroke="var(--text)" opacity="0.6" />
 			</svg>
 
 			<div class="summary">
@@ -190,14 +190,14 @@
 		padding: 1rem 16px 3rem;
 	}
 	.back {
-		color: #a89a8a;
+		color: var(--muted);
 		text-decoration: none;
 	}
 	h1 {
 		margin: 0.4rem 0 0;
 	}
 	.sub {
-		color: #a89a8a;
+		color: var(--muted);
 		margin: 0.2rem 0 0.8rem;
 	}
 	.boardrow {
@@ -211,14 +211,14 @@
 	}
 	.evalbar {
 		width: 14px;
-		background: #1b1815;
+		background: var(--inset);
 		border-radius: 4px;
 		display: flex;
 		flex-direction: column-reverse;
 		overflow: hidden;
 	}
 	.evalbar .white {
-		background: #f0e6d8;
+		background: var(--text-2);
 		transition: height 0.2s;
 	}
 	.nav {
@@ -231,8 +231,8 @@
 	.nav button {
 		padding: 0.5rem 0.8rem;
 		border-radius: 6px;
-		border: 1px solid #4a4038;
-		background: #2a2520;
+		border: 1px solid var(--border);
+		background: var(--card);
 		color: inherit;
 		font-size: 1rem;
 		cursor: pointer;
@@ -240,10 +240,10 @@
 	.where {
 		min-width: 4.5rem;
 		text-align: center;
-		color: #cdbfae;
+		color: var(--muted-2);
 	}
 	.note {
-		color: #f5a623;
+		color: var(--accent-text);
 	}
 	.eval {
 		margin: 0.3rem 0;
@@ -252,17 +252,17 @@
 		margin: 0.3rem 0 0.6rem;
 		padding: 8px 10px;
 		border-radius: 8px;
-		background: #2a2520;
-		border-left: 4px solid #6fcf6f;
+		background: var(--card);
+		border-left: 4px solid var(--good);
 	}
 	.comment[data-cls='inaccuracy'] {
-		border-color: #e6c84f;
+		border-color: var(--meh);
 	}
 	.comment[data-cls='mistake'] {
-		border-color: #ff9b6b;
+		border-color: var(--warn);
 	}
 	.comment[data-cls='blunder'] {
-		border-color: #ff5d5d;
+		border-color: var(--bad);
 	}
 	.graph {
 		width: 100%;
@@ -278,7 +278,7 @@
 		margin: 12px 0;
 	}
 	.side {
-		background: #2a2520;
+		background: var(--card);
 		border-radius: 8px;
 		padding: 8px 10px;
 		display: flex;
@@ -287,11 +287,11 @@
 		font-size: 0.9rem;
 	}
 	.acc {
-		color: #f5a623;
+		color: var(--accent-text);
 		font-weight: 700;
 	}
 	.counts {
-		color: #a89a8a;
+		color: var(--muted);
 		font-size: 0.8rem;
 	}
 	.moves {
@@ -304,7 +304,7 @@
 		align-items: center;
 	}
 	.num {
-		color: #a89a8a;
+		color: var(--muted);
 		margin-left: 6px;
 	}
 	.mv {
@@ -317,21 +317,21 @@
 		cursor: pointer;
 	}
 	.mv.on {
-		background: #4a4038;
+		background: var(--border);
 	}
 	.mv[data-cls='inaccuracy'] sup {
-		color: #e6c84f;
+		color: var(--meh);
 	}
 	.mv[data-cls='mistake'] sup {
-		color: #ff9b6b;
+		color: var(--warn);
 	}
 	.mv[data-cls='blunder'] sup {
-		color: #ff5d5d;
+		color: var(--bad);
 	}
 	.mv[data-cls='best'] sup {
-		color: #6fcf6f;
+		color: var(--good);
 	}
 	.err {
-		color: #ff6b6b;
+		color: var(--bad);
 	}
 </style>

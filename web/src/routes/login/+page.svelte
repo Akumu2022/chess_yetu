@@ -69,14 +69,14 @@
 		padding: 2rem 16px;
 	}
 	.back {
-		color: #f5a623;
+		color: var(--accent-text);
 		text-decoration: none;
 	}
 	h1 {
 		margin: 1rem 0 0.25rem;
 	}
 	.hint {
-		color: #a89a8a;
+		color: var(--muted);
 		margin: 0 0 1.5rem;
 	}
 	form {
@@ -93,20 +93,20 @@
 	input {
 		padding: 0.7rem;
 		border-radius: 6px;
-		border: 1px solid #4a4038;
-		background: #1b1815;
+		border: 1px solid var(--border);
+		background: var(--inset);
 		color: inherit;
 		font-size: 1rem;
 	}
 	small {
-		color: #a89a8a;
+		color: var(--muted);
 	}
 	.primary {
 		padding: 0.7rem;
 		border: none;
 		border-radius: 6px;
-		background: #f5a623;
-		color: #1b1815;
+		background: var(--accent);
+		color: var(--on-accent);
 		font-weight: 700;
 		font-size: 1rem;
 		cursor: pointer;
@@ -115,17 +115,17 @@
 		opacity: 0.5;
 	}
 	.err {
-		color: #ff6b6b;
+		color: var(--bad);
 		margin: 0;
 	}
 	.switch {
 		margin-top: 1.5rem;
-		color: #a89a8a;
+		color: var(--muted);
 	}
 	.link {
 		background: none;
 		border: none;
-		color: #f5a623;
+		color: var(--accent-text);
 		cursor: pointer;
 		font-size: inherit;
 		padding: 0;

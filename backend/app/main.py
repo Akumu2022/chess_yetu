@@ -124,8 +124,9 @@ async def _bot_move(game: Game) -> None:
     started = time.monotonic()
     try:
         uci = await bot.choose_move(game.board.copy(), game.bot_level, game.live_clocks()[game.bot_color])
-        # Even instant replies should feel like a person thinking.
-        await asyncio.sleep(max(0.0, 0.6 - (time.monotonic() - started)))
+        # Even instant replies should feel like a person thinking: a short, slightly varied pause
+        # so the player can see the computer's turn happen instead of a piece suddenly appearing.
+        await asyncio.sleep(max(0.0, random.uniform(0.9, 1.6) - (time.monotonic() - started)))
         if not game.bot_to_move:
             return  # the game ended (resign / flag) while it was thinking
         made = game.play(game.bot_color, game.seq + 1, uci)

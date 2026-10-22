@@ -195,7 +195,7 @@
 
 <style>
 	section {
-		background: #2a2520;
+		background: var(--card);
 		border-radius: 10px;
 		padding: 1rem;
 		margin-bottom: 1rem;
@@ -208,7 +208,7 @@
 		margin: 0;
 	}
 	.child {
-		background: #1b1815;
+		background: var(--inset);
 		border-radius: 8px;
 		padding: 12px;
 		display: flex;
@@ -219,7 +219,7 @@
 		font-size: 1.1rem;
 	}
 	.muted {
-		color: #a89a8a;
+		color: var(--muted);
 	}
 	.small {
 		font-size: 0.85rem;
@@ -233,7 +233,7 @@
 	}
 	progress {
 		width: 100%;
-		accent-color: #f5a623;
+		accent-color: var(--accent);
 	}
 	label {
 		display: flex;
@@ -269,8 +269,8 @@
 	select {
 		padding: 0.6rem;
 		border-radius: 6px;
-		border: 1px solid #4a4038;
-		background: #1b1815;
+		border: 1px solid var(--border);
+		background: var(--inset);
 		color: inherit;
 		font-size: 1rem;
 	}
@@ -278,13 +278,13 @@
 		cursor: pointer;
 	}
 	button.primary {
-		background: #f5a623;
-		color: #1b1815;
+		background: var(--accent);
+		color: var(--on-accent);
 		border: none;
 		font-weight: 700;
 	}
 	button.danger {
-		color: #ff8a8a;
+		color: var(--bad);
 	}
 	button:disabled {
 		opacity: 0.5;
@@ -298,18 +298,18 @@
 		flex-direction: column;
 		gap: 4px;
 		font-size: 0.9rem;
-		color: #a89a8a;
+		color: var(--muted);
 	}
 	.res.won {
-		color: #6fcf6f;
+		color: var(--good);
 	}
 	.res.lost {
-		color: #ff9b6b;
+		color: var(--warn);
 	}
 	.ok {
-		color: #6fcf6f;
+		color: var(--good);
 	}
 	.err {
-		color: #ff6b6b;
+		color: var(--bad);
 	}
 </style>

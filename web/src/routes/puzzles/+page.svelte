@@ -150,7 +150,7 @@
 		padding: 1.5rem 16px 3rem;
 	}
 	.back {
-		color: #a89a8a;
+		color: var(--muted);
 		text-decoration: none;
 	}
 	h1 {
@@ -160,21 +160,21 @@
 		display: flex;
 		justify-content: space-between;
 		margin-bottom: 0.75rem;
-		color: #cdbfae;
+		color: var(--muted-2);
 	}
 	.streak {
-		color: #f5a623;
+		color: var(--accent-text);
 		font-weight: 700;
 	}
 	.goal {
 		margin: 0 0 0.5rem;
 	}
 	.msg {
-		color: #f5a623;
+		color: var(--accent-text);
 		margin: 0.5rem 0;
 	}
 	.done {
-		background: #2a2520;
+		background: var(--card);
 		border-radius: 10px;
 		padding: 1rem;
 		margin-top: 1rem;
@@ -187,8 +187,8 @@
 	}
 	button.primary,
 	.cta {
-		background: #f5a623;
-		color: #1b1815;
+		background: var(--accent);
+		color: var(--on-accent);
 		border: none;
 		border-radius: 8px;
 		padding: 0.8rem 1rem;
@@ -199,6 +199,6 @@
 		cursor: pointer;
 	}
 	.err {
-		color: #ff6b6b;
+		color: var(--bad);
 	}
 </style>

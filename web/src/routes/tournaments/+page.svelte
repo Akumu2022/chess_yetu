@@ -96,7 +96,7 @@
 		padding: 1rem 16px 3rem;
 	}
 	.back {
-		color: #a89a8a;
+		color: var(--muted);
 		text-decoration: none;
 	}
 	h1 {
@@ -104,7 +104,7 @@
 	}
 	.sub,
 	.muted {
-		color: #a89a8a;
+		color: var(--muted);
 	}
 	.list {
 		list-style: none;
@@ -117,26 +117,26 @@
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
-		background: #2a2520;
+		background: var(--card);
 		border-radius: 10px;
 		padding: 0.8rem 1rem;
 		color: inherit;
 		text-decoration: none;
 	}
 	.meta {
-		color: #a89a8a;
+		color: var(--muted);
 		font-size: 0.9rem;
 	}
 	.state {
 		font-size: 0.85rem;
-		color: #cdbfae;
+		color: var(--muted-2);
 	}
 	.state.running {
-		color: #6fcf6f;
+		color: var(--good);
 		font-weight: 700;
 	}
 	section {
-		background: #2a2520;
+		background: var(--card);
 		border-radius: 10px;
 		padding: 1rem;
 		margin-top: 1rem;
@@ -162,15 +162,15 @@
 	input {
 		padding: 0.6rem;
 		border-radius: 6px;
-		border: 1px solid #4a4038;
-		background: #1b1815;
+		border: 1px solid var(--border);
+		background: var(--inset);
 		color: inherit;
 		font-size: 1rem;
 		min-width: 0;
 	}
 	button.primary {
-		background: #f5a623;
-		color: #1b1815;
+		background: var(--accent);
+		color: var(--on-accent);
 		border: none;
 		border-radius: 8px;
 		padding: 0.8rem;
@@ -182,6 +182,6 @@
 		opacity: 0.5;
 	}
 	.err {
-		color: #ff6b6b;
+		color: var(--bad);
 	}
 </style>

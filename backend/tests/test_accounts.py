@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -110,3 +112,13 @@ def test_queue_never_pairs_with_a_ghost(client):
     client.post("/queue", json={"minutes": 5, "increment": 0}, headers=ha)
     matchmaking.queue[next(iter(matchmaking.queue))].last_seen -= 10  # tab closed 10s ago
     assert client.post("/queue", json={"minutes": 5, "increment": 0}, headers=hb).json()["status"] == "waiting"
+
+
+def test_sign_in_lasts_thirty_days(client):
+    import jwt as pyjwt
+
+    from app import auth
+
+    r = client.post("/auth/register", json={"username": "daylong", "password": "password123"})
+    claims = pyjwt.decode(r.json()["token"], auth.SECRET, algorithms=["HS256"])
+    assert 29 * 86400 < claims["exp"] - time.time() <= 30 * 86400

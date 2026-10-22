@@ -38,6 +38,7 @@
 		{ label: '3+2', m: 3, i: 2 },
 		{ label: '5+3', m: 5, i: 3 },
 		{ label: '10+0', m: 10, i: 0 },
+		{ label: '10+5', m: 10, i: 5 },
 		{ label: '15+10', m: 15, i: 10 }
 	];
 
@@ -178,6 +179,7 @@
 				<a class="signin" href="/login">Sign in</a>
 			{/if}
 		{/if}
+		<a class="gear" href="/settings" aria-label="Settings" title="Settings">⚙</a>
 	</header>
 
 	<section class="card play">
@@ -223,6 +225,7 @@
 		</div>
 	</section>
 
+	{#if session.notice && !session.user}<p class="info">{session.notice}</p>{/if}
 	{#if info}<p class="info">{info}</p>{/if}
 	{#if error}<p class="err">{error} {#if !session.user}<a href="/login">Sign in</a>{/if}</p>{/if}
 
@@ -305,8 +308,8 @@
 		width: 48px;
 		height: 48px;
 		border-radius: 12px;
-		background: linear-gradient(135deg, #f5a623, #d9822b);
-		color: #1b1815;
+		background: linear-gradient(135deg, var(--accent), #d9822b);
+		color: var(--on-accent);
 		font-size: 2rem;
 		line-height: 1;
 	}
@@ -316,7 +319,7 @@
 		letter-spacing: -0.01em;
 	}
 	.tag {
-		color: #a89a8a;
+		color: var(--muted);
 		margin: 0;
 		font-size: 0.9rem;
 	}
@@ -328,33 +331,45 @@
 		gap: 2px;
 	}
 	.rating {
-		color: #f5a623;
+		color: var(--accent-text);
 		font-weight: 700;
 	}
+	.gear {
+		display: grid;
+		place-items: center;
+		min-width: 44px;
+		min-height: 44px;
+		border-radius: 12px;
+		border: 1px solid var(--border);
+		background: var(--card);
+		color: var(--muted-2);
+		text-decoration: none;
+		font-size: 1.3rem;
+	}
 	.signin {
-		color: #1b1815;
-		background: #f5a623;
+		color: var(--on-accent);
+		background: var(--accent);
 		padding: 0.55rem 1rem;
 		border-radius: 999px;
 		text-decoration: none;
 		font-weight: 700;
 	}
 	.card {
-		background: #2a2520;
-		border: 1px solid #38302a;
+		background: var(--card);
+		border: 1px solid var(--line);
 		border-radius: 14px;
 		padding: 1.1rem;
 		margin-bottom: 1rem;
 		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
 	}
 	.card.play {
-		border-color: #5a4524;
+		border-color: var(--accent-line);
 	}
 	h2 {
 		font-size: 0.8rem;
 		text-transform: uppercase;
 		letter-spacing: 0.08em;
-		color: #a89a8a;
+		color: var(--muted);
 		margin: 0 0 0.75rem;
 	}
 	h3 {
@@ -364,7 +379,7 @@
 	.friend {
 		margin-top: 1.1rem;
 		padding-top: 1rem;
-		border-top: 1px solid #3d342c;
+		border-top: 1px solid var(--line);
 	}
 	.friend .secondary {
 		margin-top: 0;
@@ -372,7 +387,7 @@
 	.or {
 		margin: 0.7rem 0 0.5rem;
 		text-align: center;
-		color: #a89a8a;
+		color: var(--muted);
 		font-size: 0.85rem;
 	}
 	.tiles {
@@ -385,8 +400,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 3px;
-		background: #2a2520;
-		border: 1px solid #38302a;
+		background: var(--card);
+		border: 1px solid var(--line);
 		border-radius: 14px;
 		padding: 0.9rem;
 		color: inherit;
@@ -396,18 +411,18 @@
 	}
 	.tile:hover,
 	.tile:focus-visible {
-		border-color: #f5a623;
+		border-color: var(--accent);
 		transform: translateY(-2px);
 	}
 	.tile.kids {
-		background: linear-gradient(135deg, #4a3818, #2a2520);
+		background: linear-gradient(135deg, var(--accent-bg-2), var(--card));
 	}
 	.tile .icon {
 		font-size: 1.6rem;
 		margin-bottom: 4px;
 	}
 	.tile span:not(.icon) {
-		color: #b9ab9a;
+		color: var(--muted-2);
 		font-size: 0.82rem;
 		line-height: 1.3;
 	}
@@ -420,13 +435,13 @@
 	}
 	button.inline {
 		display: inline;
-		color: #f5a623;
+		color: var(--accent-text);
 		font-size: inherit;
 	}
 	.presets {
 		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: 8px;
+		grid-template-columns: repeat(5, 1fr);
+		gap: 6px;
 		margin-bottom: 8px;
 	}
 	form {
@@ -438,55 +453,55 @@
 		min-width: 0;
 		padding: 0.7rem;
 		border-radius: 10px;
-		border: 1px solid #4a4038;
-		background: #1b1815;
+		border: 1px solid var(--border);
+		background: var(--inset);
 		color: inherit;
 		font-size: 1rem;
 	}
 	input:focus-visible {
-		outline: 2px solid #f5a623;
+		outline: 2px solid var(--accent);
 		outline-offset: 1px;
 	}
 	button {
 		padding: 0.7rem 0.5rem;
 		min-height: 44px;
 		border-radius: 10px;
-		border: 1px solid #4a4038;
-		background: #1b1815;
+		border: 1px solid var(--border);
+		background: var(--inset);
 		color: inherit;
 		font-size: 1rem;
 		cursor: pointer;
 		transition: background 0.12s, border-color 0.12s;
 	}
 	button:hover:not(:disabled) {
-		border-color: #8a7358;
+		border-color: var(--border-strong);
 	}
 	button:focus-visible {
-		outline: 2px solid #f5a623;
+		outline: 2px solid var(--accent);
 		outline-offset: 2px;
 	}
 	button.active {
-		border-color: #f5a623;
-		background: #3a2e1a;
-		color: #ffd48a;
+		border-color: var(--accent);
+		background: var(--accent-bg);
+		color: var(--accent-strong);
 		font-weight: 700;
 	}
 	button.primary {
-		background: #f5a623;
-		color: #1b1815;
+		background: var(--accent);
+		color: var(--on-accent);
 		border: none;
 		font-weight: 700;
 		width: 100%;
 		font-size: 1.05rem;
 	}
 	button.primary:hover:not(:disabled) {
-		background: #ffb940;
+		background: var(--accent-hover);
 	}
 	button.secondary {
 		width: 100%;
 		margin-top: 8px;
-		background: #1b1815;
-		border-color: #6b5a44;
+		background: var(--inset);
+		border-color: var(--border-strong);
 	}
 	button.join {
 		width: auto;
@@ -495,7 +510,7 @@
 	button.link {
 		background: none;
 		border: none;
-		color: #a89a8a;
+		color: var(--muted);
 		padding: 0;
 		min-height: 0;
 		font-size: 0.85rem;
@@ -506,27 +521,27 @@
 		cursor: default;
 	}
 	.note {
-		color: #a89a8a;
+		color: var(--muted);
 		font-size: 0.85rem;
 		margin: 8px 0 10px;
 		line-height: 1.4;
 	}
 	.note a {
-		color: #f5a623;
+		color: var(--accent-text);
 	}
 	.err {
-		color: #ff8a8a;
-		background: #3a2222;
+		color: var(--bad);
+		background: var(--bad-bg);
 		border-radius: 10px;
 		padding: 10px 12px;
 		margin: 0 0 1rem;
 	}
 	.err a {
-		color: #f5a623;
+		color: var(--accent-text);
 	}
 	.info {
-		background: #3a322b;
-		border-left: 3px solid #f5a623;
+		background: var(--card-2);
+		border-left: 3px solid var(--accent);
 		padding: 10px 12px;
 		border-radius: 8px;
 		margin: 0 0 1rem;
@@ -544,19 +559,19 @@
 		grid-template-columns: 3.5rem 1fr auto;
 		gap: 8px;
 		font-size: 0.9rem;
-		color: #a89a8a;
+		color: var(--muted);
 	}
 	.history a {
-		color: #f5a623;
+		color: var(--accent-text);
 	}
 	.res {
 		font-weight: 700;
 	}
 	.res.won {
-		color: #6fcf6f;
+		color: var(--good);
 	}
 	.res.lost {
-		color: #ff6b6b;
+		color: var(--bad);
 	}
 	.delta {
 		font-variant-numeric: tabular-nums;

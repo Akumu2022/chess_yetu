@@ -146,7 +146,7 @@
 		padding: 1rem 16px 3rem;
 	}
 	.back {
-		color: #a89a8a;
+		color: var(--muted);
 		text-decoration: none;
 	}
 	h1 {
@@ -158,23 +158,23 @@
 	}
 	.sub,
 	.muted {
-		color: #a89a8a;
+		color: var(--muted);
 	}
 	.status {
-		background: #2a2520;
+		background: var(--card);
 		border-radius: 10px;
 		padding: 0.8rem 1rem;
 		margin: 0.6rem 0;
 	}
 	.status[data-status='running'] {
-		border-left: 4px solid #6fcf6f;
+		border-left: 4px solid var(--good);
 	}
 	.wait {
-		color: #f5a623;
+		color: var(--accent-text);
 	}
 	button.primary {
-		background: #f5a623;
-		color: #1b1815;
+		background: var(--accent);
+		color: var(--on-accent);
 		border: none;
 		border-radius: 8px;
 		padding: 0.8rem 1.2rem;
@@ -193,28 +193,28 @@
 	}
 	th {
 		text-align: left;
-		color: #a89a8a;
+		color: var(--muted);
 		font-weight: 400;
 		padding: 4px;
 	}
 	td {
 		padding: 6px 4px;
-		border-top: 1px solid #3a322b;
+		border-top: 1px solid var(--card-2);
 	}
 	tr.me td {
-		background: #3a2e1a;
+		background: var(--accent-bg);
 	}
 	tr.out {
 		opacity: 0.5;
 	}
 	.pts {
 		font-weight: 700;
-		color: #f5a623;
+		color: var(--accent-text);
 	}
 	td a {
 		color: inherit;
 	}
 	.err {
-		color: #ff6b6b;
+		color: var(--bad);
 	}
 </style>

@@ -1,9 +1,18 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light" data-board="classic" data-pieces="classic">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="text-scale" content="scale" />
+		<script>
+			// Apply saved display choices before the first paint (light unless the player chose otherwise).
+			try {
+				var p = JSON.parse(localStorage.getItem('chess_yetu:prefs') || '{}'), d = document.documentElement;
+				if (p.theme === 'dark') d.dataset.theme = 'dark';
+				if (p.board) d.dataset.board = p.board;
+				if (p.pieces) d.dataset.pieces = p.pieces;
+			} catch (e) {}
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

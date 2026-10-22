@@ -75,3 +75,8 @@ export async function register(page: Page, username: string) {
 	await page.waitForURL('/');
 	await expect(page.getByText(username)).toBeVisible();
 }
+
+/** The move list is always open on wide screens and folded on phones; make sure it is open. */
+export async function openMoves(page: Page) {
+	if (!(await page.locator('.moves').isVisible())) await page.locator('.movelist summary').click();
+}
