@@ -6,7 +6,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiError implements Exception {
   final String message;
-  ApiError(this.message);
+
+  /// HTTP status, or null when the server couldn't be reached at all.
+  final int? status;
+  ApiError(this.message, [this.status]);
   @override
   String toString() => message;
 }
@@ -24,17 +27,35 @@ class User {
   factory User.fromJson(Map<String, dynamic> j) => User(j['username'], j['rating']);
 }
 
+/// A child profile, as shown to the child and to their parent.
+class Child {
+  final int id, rating, games, birthYear, dailyLimitMin, minutesToday, minutesLeft;
+  final String nickname;
+  Child.fromJson(Map<String, dynamic> j)
+      : id = j['id'],
+        nickname = j['nickname'],
+        rating = j['rating'],
+        games = j['games'],
+        birthYear = j['birth_year'],
+        dailyLimitMin = j['daily_limit_min'],
+        minutesToday = j['minutes_today'],
+        minutesLeft = j['minutes_left'];
+}
+
 /// Talks to the Chess Yetu API. One instance for the whole app.
 class Api extends ChangeNotifier {
   /// [client] is injectable so tests can answer requests without a server.
   Api({http.Client? client}) : _http = client ?? http.Client();
   final http.Client _http;
-  static const _kUrl = 'server_url', _kToken = 'token';
+  static const _kUrl = 'server_url', _kToken = 'token', _kKid = 'kid';
 
   late SharedPreferences _prefs;
   String baseUrl = '';
   String? token;
   User? user;
+
+  /// Set while a child's session is active: the whole app then shows only kids' features.
+  Child? kid;
 
   /// The Android emulator reaches the host machine at 10.0.2.2; the Docker API is on 8780.
   static String get defaultUrl =>
@@ -44,15 +65,40 @@ class Api extends ChangeNotifier {
     _prefs = await SharedPreferences.getInstance();
     baseUrl = _prefs.getString(_kUrl) ?? defaultUrl;
     token = _prefs.getString(_kToken);
-    if (token != null) {
-      try {
-        user = User.fromJson(await _req('GET', '/me'));
-      } on ApiError {
-        // server unreachable or token expired: carry on as a guest
-        token = null;
-        _prefs.remove(_kToken);
+    final saved = _prefs.getString(_kKid);
+    if (token == null) return;
+    try {
+      final who = await _req('GET', '/whoami');
+      switch (who['kind']) {
+        case 'kid':
+          _setKid(who['child']);
+        case 'adult':
+          user = User.fromJson(who['user']);
+        default:
+          await _forgetSession();
       }
+    } on ApiError catch (e) {
+      if (e.status == 401) {
+        await _forgetSession();
+      } else if (saved != null) {
+        // offline: a child's session must stay locked even when the server can't be reached
+        kid = Child.fromJson(jsonDecode(saved));
+      }
+      // offline as an adult: keep the token; the user just isn't loaded until the server is back
     }
+  }
+
+  Future<void> _forgetSession() async {
+    token = null;
+    user = null;
+    kid = null;
+    await _prefs.remove(_kToken);
+    await _prefs.remove(_kKid);
+  }
+
+  void _setKid(Map<String, dynamic> json) {
+    kid = Child.fromJson(json);
+    _prefs.setString(_kKid, jsonEncode(json));
   }
 
   Future<void> setBaseUrl(String url) async {
@@ -70,16 +116,19 @@ class Api extends ChangeNotifier {
     final headers = {'Content-Type': 'application/json', if (token != null) 'Authorization': 'Bearer $token'};
     final uri = Uri.parse('$baseUrl$path');
     try {
+      final payload = jsonEncode(body ?? {});
       final send = switch (method) {
         'GET' => _http.get(uri, headers: headers),
         'DELETE' => _http.delete(uri, headers: headers),
-        _ => _http.post(uri, headers: headers, body: jsonEncode(body ?? {})),
+        'PUT' => _http.put(uri, headers: headers, body: payload),
+        'PATCH' => _http.patch(uri, headers: headers, body: payload),
+        _ => _http.post(uri, headers: headers, body: payload),
       };
       final r = await send.timeout(const Duration(seconds: 10));
       final data = r.body.isEmpty ? null : jsonDecode(r.body);
       if (r.statusCode >= 400) {
         final d = data is Map ? data['detail'] : null;
-        throw ApiError(d is String ? d : 'Something went wrong (${r.statusCode})');
+        throw ApiError(d is String ? d : 'Something went wrong (${r.statusCode})', r.statusCode);
       }
       return data;
     } on ApiError {
@@ -103,15 +152,18 @@ class Api extends ChangeNotifier {
       _signedIn(await _req('POST', '/auth/register', body: {'username': name, 'password': pw}));
 
   Future<void> logout() async {
-    token = null;
-    user = null;
-    await _prefs.remove(_kToken);
+    await _forgetSession();
     notifyListeners();
   }
 
+  /// Fresh rating and (for a child) time left.
   Future<void> refreshUser() async {
     if (token == null) return;
-    user = User.fromJson(await _req('GET', '/me'));
+    if (kid != null) {
+      _setKid(await _req('GET', '/kids/me'));
+    } else {
+      user = User.fromJson(await _req('GET', '/me'));
+    }
     notifyListeners();
   }
 
@@ -187,4 +239,65 @@ class Api extends ChangeNotifier {
     });
     return r['id'];
   }
+
+  // ---- parent: PIN, children --------------------------------------------------
+
+  Future<bool> pinIsSet() async => (await _req('GET', '/kids/pin'))['set'] == true;
+
+  Future<void> setPin(String pin, {String? current}) async =>
+      _req('PUT', '/kids/pin', body: {'pin': pin, 'current': ?current});
+
+  Future<List<Child>> children() async =>
+      [for (final c in await _req('GET', '/kids/children')) Child.fromJson(c)];
+
+  Future<void> createChild(int birthYear) async =>
+      _req('POST', '/kids/children', body: {'birth_year': birthYear, 'consent': true});
+
+  Future<void> setDailyLimit(int childId, int minutes) async =>
+      _req('PATCH', '/kids/children/$childId', body: {'daily_limit_min': minutes});
+
+  Future<void> deleteChild(int childId) async => _req('DELETE', '/kids/children/$childId');
+
+  Future<List<dynamic>> childGames(int childId) async => await _req('GET', '/kids/children/$childId/games');
+
+  /// Hands the device to a child: from here on the app only shows kids' features.
+  Future<void> startKidSession(int childId) async {
+    final r = await _req('POST', '/kids/children/$childId/session');
+    token = r['token'];
+    user = null;
+    await _prefs.setString(_kToken, token!);
+    _setKid(r['child']);
+    notifyListeners();
+  }
+
+  // ---- child ------------------------------------------------------------------
+
+  /// Leaves kids mode; only the parent's PIN opens this door.
+  Future<void> exitKidsMode(String pin) async {
+    final r = await _req('POST', '/kids/exit', body: {'pin': pin});
+    kid = null;
+    await _prefs.remove(_kKid);
+    await _signedIn(r);
+  }
+
+  Future<List<dynamic>> kidGames() async => await _req('GET', '/kids/me/games');
+
+  Future<Map<String, String>> phrases() async =>
+      Map<String, String>.from(await _req('GET', '/kids/phrases'));
+
+  Future<Seat> newKidBotGame({required int bot, required String color, int minutes = 10, int increment = 5}) async =>
+      Seat.fromJson(await _req('POST', '/kids/games/ai',
+          body: {'bot': bot, 'color': color, 'minutes': minutes, 'increment': increment}));
+
+  Future<Seat?> joinKidQueue({int minutes = 10, int increment = 5}) async {
+    final r = await _req('POST', '/kids/queue', body: {'minutes': minutes, 'increment': increment});
+    return r['status'] == 'matched' ? Seat.fromJson(r['seat']) : null;
+  }
+
+  Future<Seat?> pollKidQueue() async {
+    final r = await _req('GET', '/kids/queue');
+    return r['status'] == 'matched' ? Seat.fromJson(r['seat']) : null;
+  }
+
+  Future<void> leaveKidQueue() async => _req('DELETE', '/kids/queue');
 }

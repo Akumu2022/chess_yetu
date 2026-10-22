@@ -15,11 +15,11 @@ String _when(String iso) {
 }
 
 String _statusLabel(String s) => switch (s) {
-      'upcoming' => 'Starts soon',
-      'running' => 'Running',
-      'finishing' => 'Finishing',
-      _ => 'Finished',
-    };
+  'upcoming' => 'Starts soon',
+  'running' => 'Running',
+  'finishing' => 'Finishing',
+  _ => 'Finished',
+};
 
 class TournamentsScreen extends StatefulWidget {
   final Api api;
@@ -34,57 +34,86 @@ class _TournamentsScreenState extends State<TournamentsScreen> {
   Future<void> _create() async {
     final id = await Navigator.push<int>(context, MaterialPageRoute(builder: (_) => NewArenaScreen(api: widget.api)));
     if (!mounted || id == null) return;
-    setState(() => _future = widget.api.tournaments());
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => TournamentScreen(api: widget.api, id: id)));
-    if (mounted) setState(() => _future = widget.api.tournaments());
+    setState(() {
+      _future = widget.api.tournaments();
+    });
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TournamentScreen(api: widget.api, id: id),
+      ),
+    );
+    if (mounted) {
+      setState(() {
+        _future = widget.api.tournaments();
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Arenas'), actions: [
-          if (widget.api.user != null)
-            IconButton(
-              tooltip: 'Create an arena',
-              icon: const Icon(Icons.add),
-              onPressed: _create,
-            ),
-        ]),
-        body: RefreshIndicator(
-          onRefresh: () async {
-            setState(() => _future = widget.api.tournaments());
-            await _future.catchError((_) => <dynamic>[]);
-          },
-          child: FutureBuilder<List<dynamic>>(
-            future: _future,
-            builder: (context, snap) {
-              if (snap.hasError) return ListView(children: [Padding(padding: const EdgeInsets.all(24), child: Text('${snap.error}'))]);
-              if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-              final items = snap.data!;
-              if (items.isEmpty) {
-                return ListView(children: const [
-                  Padding(padding: EdgeInsets.all(24), child: Text('No arenas yet. Tap + to create one.')),
-                ]);
-              }
-              return ListView(children: [
-                for (final t in items)
-                  ListTile(
-                    title: Text(t['name']),
-                    subtitle: Text(
-                      '${t['minutes']}+${t['increment']}  ·  ${t['duration_min']} min  ·  ${t['players']} players\n'
-                      '${_statusLabel(t['status'])}, ${_when(t['starts_at'])}',
-                    ),
-                    isThreeLine: true,
-                    trailing: t['joined'] == true ? const Chip(label: Text('Joined')) : const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      await Navigator.push(context, MaterialPageRoute(builder: (_) => TournamentScreen(api: widget.api, id: t['id'])));
-                      if (mounted) setState(() => _future = widget.api.tournaments());
-                    },
+    appBar: AppBar(
+      title: const Text('Arenas'),
+      actions: [
+        if (widget.api.user != null)
+          IconButton(tooltip: 'Create an arena', icon: const Icon(Icons.add), onPressed: _create),
+      ],
+    ),
+    body: RefreshIndicator(
+      onRefresh: () async {
+        setState(() {
+          _future = widget.api.tournaments();
+        });
+        await _future.catchError((_) => <dynamic>[]);
+      },
+      child: FutureBuilder<List<dynamic>>(
+        future: _future,
+        builder: (context, snap) {
+          if (snap.hasError) {
+            return ListView(
+              children: [Padding(padding: const EdgeInsets.all(24), child: Text('${snap.error}'))],
+            );
+          }
+          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+          final items = snap.data!;
+          if (items.isEmpty) {
+            return ListView(
+              children: const [
+                Padding(padding: EdgeInsets.all(24), child: Text('No arenas yet. Tap + to create one.')),
+              ],
+            );
+          }
+          return ListView(
+            children: [
+              for (final t in items)
+                ListTile(
+                  title: Text(t['name']),
+                  subtitle: Text(
+                    '${t['minutes']}+${t['increment']}  ·  ${t['duration_min']} min  ·  ${t['players']} players\n'
+                    '${_statusLabel(t['status'])}, ${_when(t['starts_at'])}',
                   ),
-              ]);
-            },
-          ),
-        ),
-      );
+                  isThreeLine: true,
+                  trailing: t['joined'] == true ? const Chip(label: Text('Joined')) : const Icon(Icons.chevron_right),
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => TournamentScreen(api: widget.api, id: t['id']),
+                      ),
+                    );
+                    if (mounted) {
+                      setState(() {
+                        _future = widget.api.tournaments();
+                      });
+                    }
+                  },
+                ),
+            ],
+          );
+        },
+      ),
+    ),
+  );
 }
 
 class TournamentScreen extends StatefulWidget {
@@ -124,7 +153,11 @@ class _TournamentScreenState extends State<TournamentScreen> {
         _error = null;
       });
     } on ApiError catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) {
+        setState(() {
+          _error = e.message;
+        });
+      }
     }
   }
 
@@ -138,7 +171,12 @@ class _TournamentScreenState extends State<TournamentScreen> {
       final seat = await widget.api.tournamentPoll(widget.id);
       if (seat == null || !mounted || _inGame) return;
       _inGame = true;
-      await Navigator.push(context, MaterialPageRoute(builder: (_) => GameScreen(api: widget.api, seat: seat)));
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => GameScreen(api: widget.api, seat: seat),
+        ),
+      );
       _inGame = false;
       if (mounted) _refresh();
     } on ApiError {
@@ -147,7 +185,9 @@ class _TournamentScreenState extends State<TournamentScreen> {
   }
 
   Future<void> _toggle() async {
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+    });
     try {
       if (_t!['joined'] == true) {
         await widget.api.leaveTournament(widget.id);
@@ -158,7 +198,11 @@ class _TournamentScreenState extends State<TournamentScreen> {
     } on ApiError catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
     }
-    if (mounted) setState(() => _busy = false);
+    if (mounted) {
+      setState(() {
+        _busy = false;
+      });
+    }
   }
 
   @override
@@ -168,41 +212,53 @@ class _TournamentScreenState extends State<TournamentScreen> {
       appBar: AppBar(title: Text(t?['name'] ?? 'Arena')),
       body: t == null
           ? Center(child: _error != null ? Text(_error!) : const CircularProgressIndicator())
-          : ListView(padding: const EdgeInsets.all(16), children: [
-              Text(
-                '${t['minutes']}+${t['increment']}  ·  ${t['duration_min']} min  ·  ${_statusLabel(t['status'])}',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              Text('Starts ${_when(t['starts_at'])}  ·  ends ${_when(t['ends_at'])}'),
-              if (t['creator'] != null) Text('Created by ${t['creator']}'),
-              if (t['winner'] != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text('Winner: ${t['winner']}')),
-              const SizedBox(height: 12),
-              if (widget.api.user == null)
-                const Text('Sign in to join.')
-              else if (t['status'] != 'finished')
-                FilledButton(
-                  onPressed: _busy ? null : _toggle,
-                  child: Text(t['joined'] == true ? 'Leave arena' : 'Join arena'),
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Text(
+                  '${t['minutes']}+${t['increment']}  ·  ${t['duration_min']} min  ·  ${_statusLabel(t['status'])}',
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
-              if (t['joined'] == true && (t['status'] == 'running' || t['status'] == 'finishing'))
-                const Padding(
-                  padding: EdgeInsets.only(top: 8),
-                  child: Text('Stay on this screen: you are paired automatically and your game opens by itself.'),
-                ),
-              const SizedBox(height: 16),
-              Text('Standings', style: Theme.of(context).textTheme.titleMedium),
-              for (final s in t['standings'] as List)
-                ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: SizedBox(width: 28, child: Text('${s['rank']}', style: const TextStyle(fontWeight: FontWeight.bold))),
-                  title: Text(s['username']),
-                  subtitle: Text('${s['wins']}W ${s['draws']}D ${s['losses']}L'),
-                  trailing: Text('${s['points']}', style: Theme.of(context).textTheme.titleMedium),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(api: widget.api, username: s['username']))),
-                ),
-              if ((t['standings'] as List).isEmpty) const Text('Nobody has joined yet.'),
-            ]),
+                Text('Starts ${_when(t['starts_at'])}  ·  ends ${_when(t['ends_at'])}'),
+                if (t['creator'] != null) Text('Created by ${t['creator']}'),
+                if (t['winner'] != null)
+                  Padding(padding: const EdgeInsets.only(top: 8), child: Text('Winner: ${t['winner']}')),
+                const SizedBox(height: 12),
+                if (widget.api.user == null)
+                  const Text('Sign in to join.')
+                else if (t['status'] != 'finished')
+                  FilledButton(
+                    onPressed: _busy ? null : _toggle,
+                    child: Text(t['joined'] == true ? 'Leave arena' : 'Join arena'),
+                  ),
+                if (t['joined'] == true && (t['status'] == 'running' || t['status'] == 'finishing'))
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: Text('Stay on this screen: you are paired automatically and your game opens by itself.'),
+                  ),
+                const SizedBox(height: 16),
+                Text('Standings', style: Theme.of(context).textTheme.titleMedium),
+                for (final s in t['standings'] as List)
+                  ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: SizedBox(
+                      width: 28,
+                      child: Text('${s['rank']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    title: Text(s['username']),
+                    subtitle: Text('${s['wins']}W ${s['draws']}D ${s['losses']}L'),
+                    trailing: Text('${s['points']}', style: Theme.of(context).textTheme.titleMedium),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProfileScreen(api: widget.api, username: s['username']),
+                      ),
+                    ),
+                  ),
+                if ((t['standings'] as List).isEmpty) const Text('Nobody has joined yet.'),
+              ],
+            ),
     );
   }
 }

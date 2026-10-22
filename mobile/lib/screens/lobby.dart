@@ -7,6 +7,7 @@ import '../api.dart';
 import 'game.dart';
 import 'leaderboard.dart';
 import 'login.dart';
+import 'parent_portal.dart';
 import 'puzzle.dart';
 import 'review.dart';
 import 'settings.dart';
@@ -60,11 +61,22 @@ class _LobbyScreenState extends State<LobbyScreen> {
     }
   }
 
-  Future<void> _open(Seat seat, {String? shareCode, Future<(Seat, String?)> Function()? again}) async {
-    await Navigator.push(
+  Future<void> _open(
+    Seat seat, {
+    String? shareCode,
+    Future<(Seat, String?)> Function()? again,
+    bool canSearch = false,
+  }) async {
+    final result = await Navigator.push<String>(
       context,
-      MaterialPageRoute(builder: (_) => GameScreen(api: api, seat: seat, shareCode: shareCode, again: again)),
+      MaterialPageRoute(
+        builder: (_) => GameScreen(api: api, seat: seat, shareCode: shareCode, again: again, canSearch: canSearch),
+      ),
     );
+    if (result == 'search' && mounted) {
+      await _findMatch(); // "New game" after a rated match: queue again straight away
+      return;
+    }
     if (mounted) {
       api.refreshUser().catchError((_) {});
       setState(() {}); // refresh the recent-games list
@@ -74,43 +86,45 @@ class _LobbyScreenState extends State<LobbyScreen> {
   (int, int) get _tc => _clocks[_clock];
 
   Future<void> _playBot() => _guard(() async {
-        final level = _level + 1, color = _color, tc = _tc;
-        Future<(Seat, String?)> start() async =>
-            (await api.newBotGame(level: level, color: color, minutes: tc.$1, increment: tc.$2), null);
-        await _open((await start()).$1, again: start);
-      });
+    final level = _level + 1, color = _color, tc = _tc;
+    Future<(Seat, String?)> start() async =>
+        (await api.newBotGame(level: level, color: color, minutes: tc.$1, increment: tc.$2), null);
+    await _open((await start()).$1, again: start);
+  });
+
+  /// Creates a friend game with the time control chosen right now; also used for "New game" after one.
+  Future<(Seat, String?)> _newFriendGame() async {
+    final tc = _tc;
+    final s = await api.newFriendGame(minutes: tc.$1, increment: tc.$2);
+    return (s, s.gameId);
+  }
 
   Future<void> _friend() => _guard(() async {
-        final tc = _tc;
-        Future<(Seat, String?)> start() async {
-          final s = await api.newFriendGame(minutes: tc.$1, increment: tc.$2);
-          return (s, s.gameId);
-        }
-        final (s, code) = await start();
-        await _open(s, shareCode: code, again: start);
-      });
+    final (s, code) = await _newFriendGame();
+    await _open(s, shareCode: code, again: _newFriendGame);
+  });
 
   Future<void> _join() => _guard(() async {
-        if (_code.text.trim().isEmpty) return;
-        await _open(await api.joinGame(_code.text));
-      });
+    if (_code.text.trim().isEmpty) return;
+    await _open(await api.joinGame(_code.text), again: _newFriendGame);
+  });
 
   Future<void> _findMatch() => _guard(() async {
-        final seat = await api.joinQueue(_tc.$1, _tc.$2);
-        if (seat != null) return _open(seat);
-        setState(() => _searching = true);
-        _poll = Timer.periodic(const Duration(seconds: 2), (t) async {
-          try {
-            final s = await api.pollQueue();
-            if (s != null) {
-              _stopSearch(leave: false);
-              if (mounted) _open(s);
-            }
-          } on ApiError {
-            _stopSearch(leave: false);
-          }
-        });
-      });
+    final seat = await api.joinQueue(_tc.$1, _tc.$2);
+    if (seat != null) return _open(seat, canSearch: true);
+    setState(() => _searching = true);
+    _poll = Timer.periodic(const Duration(seconds: 2), (t) async {
+      try {
+        final s = await api.pollQueue();
+        if (s != null) {
+          _stopSearch(leave: false);
+          if (mounted) _open(s, canSearch: true);
+        }
+      } on ApiError {
+        _stopSearch(leave: false);
+      }
+    });
+  });
 
   void _stopSearch({bool leave = true}) {
     _poll?.cancel();
@@ -170,110 +184,151 @@ class _LobbyScreenState extends State<LobbyScreen> {
             ),
         ],
       ),
-      body: ListView(padding: const EdgeInsets.all(16), children: [
-        Text('Time control (minutes + increment)', style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: 8),
-        Wrap(spacing: 8, children: [
-          for (var i = 0; i < _clocks.length; i++)
-            ChoiceChip(
-              label: Text('${_clocks[i].$1}+${_clocks[i].$2}'),
-              selected: _clock == i,
-              onSelected: (_) => setState(() => _clock = i),
-            ),
-        ]),
-        const SizedBox(height: 24),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Play the computer', style: title),
-              const SizedBox(height: 8),
-              Wrap(spacing: 8, children: [
-                for (var i = 0; i < _levels.length; i++)
-                  ChoiceChip(label: Text(_levels[i]), selected: _level == i, onSelected: (_) => setState(() => _level = i)),
-              ]),
-              const SizedBox(height: 8),
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: 'white', label: Text('White')),
-                  ButtonSegment(value: 'random', label: Text('Random')),
-                  ButtonSegment(value: 'black', label: Text('Black')),
-                ],
-                selected: {_color},
-                onSelectionChanged: (s) => setState(() => _color = s.first),
-              ),
-              const SizedBox(height: 12),
-              FilledButton(onPressed: _busy ? null : _playBot, child: const Text('Play vs computer')),
-            ]),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Play online (rated)', style: title),
-              const SizedBox(height: 8),
-              if (u == null)
-                const Text('Sign in to be paired with another player.')
-              else if (_searching)
-                Row(children: [
-                  const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-                  const SizedBox(width: 12),
-                  const Expanded(child: Text('Searching for an opponent…')),
-                  TextButton(onPressed: _stopSearch, child: const Text('Cancel')),
-                ])
-              else
-                FilledButton.tonal(onPressed: _busy ? null : _findMatch, child: const Text('Find an opponent')),
-            ]),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Play a friend', style: title),
-              const SizedBox(height: 8),
-              OutlinedButton(onPressed: _busy ? null : _friend, child: const Text('Create a game and share the code')),
-              const SizedBox(height: 12),
-              Row(children: [
-                Expanded(
-                  child: TextField(
-                    controller: _code,
-                    decoration: const InputDecoration(labelText: 'Game code', isDense: true),
-                    autocorrect: false,
-                  ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text('Time control (minutes + increment)', style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (var i = 0; i < _clocks.length; i++)
+                ChoiceChip(
+                  label: Text('${_clocks[i].$1}+${_clocks[i].$2}'),
+                  selected: _clock == i,
+                  onSelected: (_) => setState(() => _clock = i),
                 ),
-                const SizedBox(width: 8),
-                FilledButton(onPressed: _busy ? null : _join, child: const Text('Join')),
-              ]),
-            ]),
+            ],
           ),
-        ),
-        const SizedBox(height: 12),
-        Wrap(spacing: 12, runSpacing: 8, children: [
-          if (u != null)
-            OutlinedButton.icon(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PuzzleScreen(api: api))),
-              icon: const Icon(Icons.extension),
-              label: const Text('Puzzles'),
+          const SizedBox(height: 24),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Play the computer', style: title),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      for (var i = 0; i < _levels.length; i++)
+                        ChoiceChip(
+                          label: Text(_levels[i]),
+                          selected: _level == i,
+                          onSelected: (_) => setState(() => _level = i),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(value: 'white', label: Text('White')),
+                      ButtonSegment(value: 'random', label: Text('Random')),
+                      ButtonSegment(value: 'black', label: Text('Black')),
+                    ],
+                    selected: {_color},
+                    onSelectionChanged: (s) => setState(() => _color = s.first),
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton(onPressed: _busy ? null : _playBot, child: const Text('Play vs computer')),
+                ],
+              ),
             ),
-          OutlinedButton.icon(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TournamentsScreen(api: api))),
-            icon: const Icon(Icons.emoji_events),
-            label: const Text('Arenas'),
           ),
-          OutlinedButton.icon(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LeaderboardScreen(api: api))),
-            icon: const Icon(Icons.leaderboard),
-            label: const Text('Leaderboard'),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Play online (rated)', style: title),
+                  const SizedBox(height: 8),
+                  if (u == null)
+                    const Text('Sign in to be paired with another player.')
+                  else if (_searching)
+                    Row(
+                      children: [
+                        const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                        const SizedBox(width: 12),
+                        const Expanded(child: Text('Searching for an opponent…')),
+                        TextButton(onPressed: _stopSearch, child: const Text('Cancel')),
+                      ],
+                    )
+                  else
+                    FilledButton.tonal(onPressed: _busy ? null : _findMatch, child: const Text('Find an opponent')),
+                ],
+              ),
+            ),
           ),
-        ]),
-        if (u != null) _History(api: api, key: ValueKey(u.rating)),
-        const SizedBox(height: 24),
-        const _VersionLabel(),
-      ]),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Play a friend', style: title),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: _busy ? null : _friend,
+                    child: const Text('Create a game and share the code'),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _code,
+                          decoration: const InputDecoration(labelText: 'Game code', isDense: true),
+                          autocorrect: false,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(onPressed: _busy ? null : _join, child: const Text('Join')),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: [
+              if (u != null)
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PuzzleScreen(api: api))),
+                  icon: const Icon(Icons.extension),
+                  label: const Text('Puzzles'),
+                ),
+              OutlinedButton.icon(
+                onPressed: () =>
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => TournamentsScreen(api: api))),
+                icon: const Icon(Icons.emoji_events),
+                label: const Text('Arenas'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () =>
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => ParentPortalScreen(api: api))),
+                icon: const Icon(Icons.child_care),
+                label: const Text('Kids'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () =>
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => LeaderboardScreen(api: api))),
+                icon: const Icon(Icons.leaderboard),
+                label: const Text('Leaderboard'),
+              ),
+            ],
+          ),
+          if (u != null) _History(api: api, key: ValueKey(u.rating)),
+          const SizedBox(height: 24),
+          const _VersionLabel(),
+        ],
+      ),
     );
   }
 }
@@ -290,27 +345,35 @@ class _History extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => FutureBuilder<List<dynamic>>(
-        future: api.myGames(),
-        builder: (context, snap) {
-          final games = snap.data ?? const [];
-          if (games.isEmpty) return const SizedBox();
-          return Padding(
-            padding: const EdgeInsets.only(top: 24),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Recent games', style: Theme.of(context).textTheme.titleMedium),
-              for (final g in games.take(8))
-                ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  title: Text('${_outcome(g)} · ${(g['reason'] as String).replaceAll('_', ' ')}'),
-                  subtitle: Text('${g['moves']} moves as ${g['color']}'),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReviewScreen(api: api, gameId: g['id']))),
-                  trailing: g['rated'] == true ? Text('${g['delta'] >= 0 ? '+' : ''}${g['delta']}') : null,
+    future: api.myGames(),
+    builder: (context, snap) {
+      final games = snap.data ?? const [];
+      if (games.isEmpty) return const SizedBox();
+      return Padding(
+        padding: const EdgeInsets.only(top: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Recent games', style: Theme.of(context).textTheme.titleMedium),
+            for (final g in games.take(8))
+              ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: Text('${_outcome(g)} · ${(g['reason'] as String).replaceAll('_', ' ')}'),
+                subtitle: Text('${g['moves']} moves as ${g['color']}'),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ReviewScreen(api: api, gameId: g['id']),
+                  ),
                 ),
-            ]),
-          );
-        },
+                trailing: g['rated'] == true ? Text('${g['delta'] >= 0 ? '+' : ''}${g['delta']}') : null,
+              ),
+          ],
+        ),
       );
+    },
+  );
 }
 
 /// Copies [text] to the clipboard and tells the user.
@@ -325,14 +388,14 @@ class _VersionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => FutureBuilder<PackageInfo>(
-        future: PackageInfo.fromPlatform(),
-        builder: (context, snap) => snap.hasData
-            ? Center(
-                child: Text(
-                  'Chess Yetu v${snap.data!.version} (${snap.data!.buildNumber})',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              )
-            : const SizedBox(),
-      );
+    future: PackageInfo.fromPlatform(),
+    builder: (context, snap) => snap.hasData
+        ? Center(
+            child: Text(
+              'Chess Yetu v${snap.data!.version} (${snap.data!.buildNumber})',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          )
+        : const SizedBox(),
+  );
 }

@@ -36,7 +36,11 @@ class GameController extends ChangeNotifier {
   DateTime _clocksAt = DateTime.now();
   String? result, reason, drawOffer, error;
   Map<String, dynamic>? ratingChange;
-  bool vsBot = false, connected = false, opponentOnline = true;
+  bool vsBot = false, kids = false, inTournament = false, connected = false, opponentOnline = true;
+
+  /// Latest preset phrase from the opponent (kids' games only) and when it arrived.
+  String? opponentPhrase;
+  DateTime? opponentPhraseAt;
   bool drawDeclined = false;
 
   WebSocketChannel? _ch;
@@ -110,6 +114,8 @@ class GameController extends ChangeNotifier {
     reason = m['reason'];
     drawOffer = m['draw_offer'];
     vsBot = m['vs_bot'] ?? false;
+    kids = m['kids'] ?? false;
+    inTournament = m['tournament'] != null;
   }
 
   void _setClocks(Map c) {
@@ -146,6 +152,11 @@ class GameController extends ChangeNotifier {
         if (m['color'] != you) opponentOnline = m['connected'];
       case 'draw_offered':
         drawOffer = m['by'];
+      case 'said':
+        if (m['by'] != you) {
+          opponentPhrase = m['id'];
+          opponentPhraseAt = DateTime.now();
+        }
       case 'draw_declined':
         drawDeclined = true;
       case 'pong':
@@ -153,7 +164,9 @@ class GameController extends ChangeNotifier {
       case 'error':
         error = m['message'] ?? m['code'];
         // our optimistic move was rejected: reconnect to get the authoritative position
-        _ch?.sink.close();
+        if (const {'illegal_move', 'bad_seq', 'not_your_turn', 'not_active', 'timeout'}.contains(m['code'])) {
+          _ch?.sink.close();
+        }
     }
     notifyListeners();
   }
@@ -185,6 +198,9 @@ class GameController extends ChangeNotifier {
     _send({'type': 'move', 'seq': seq, 'move': uci});
     notifyListeners();
   }
+
+  /// Kids can only send ids from a fixed list; the server relays the id, never text.
+  void say(String phraseId) => _send({'type': 'say', 'id': phraseId});
 
   void resign() => _send({'type': 'resign'});
   void offerDraw() {

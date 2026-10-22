@@ -83,4 +83,76 @@ void main() {
     await api.setBaseUrl('https://chess.example');
     expect(api.wsUri('abc').toString(), 'wss://chess.example/ws/games/abc');
   });
+
+  test('PIN and daily limit use PUT and PATCH', () async {
+    final (api, seen) = await _api((_) => _json({'set': true}));
+    await api.setPin('4321', current: '1111');
+    expect(seen.last.method, 'PUT');
+    expect(jsonDecode(seen.last.body), {'pin': '4321', 'current': '1111'});
+    await api.setDailyLimit(3, 40);
+    expect(seen.last.method, 'PATCH');
+    expect(seen.last.url.path, '/kids/children/3');
+  });
+
+  group('kids mode', () {
+    final child = {
+      'id': 3,
+      'nickname': 'BraveSimba',
+      'rating': 1500,
+      'games': 0,
+      'birth_year': 2017,
+      'daily_limit_min': 60,
+      'minutes_today': 5,
+      'minutes_left': 55,
+    };
+
+    test('handing over the device switches to the child and survives a restart, even offline', () async {
+      final (api, _) = await _api((r) => r.url.path.endsWith('/session') ? _json({'token': 'kidtok', 'child': child}) : _json({}));
+      await api.startKidSession(3);
+      expect(api.kid?.nickname, 'BraveSimba');
+      expect(api.user, isNull);
+
+      // restart with the server unreachable: the child's session must stay locked
+      final offline = Api(client: MockClient((_) async => throw Exception('no network')));
+      await offline.init();
+      expect(offline.kid?.nickname, 'BraveSimba');
+      expect(offline.kid?.minutesLeft, 55);
+    });
+
+    test('restart recognises the session from whoami', () async {
+      SharedPreferences.setMockInitialValues({'token': 'kidtok'});
+      final api = Api(client: MockClient((_) async => _json({'kind': 'kid', 'child': child})));
+      await api.init();
+      expect(api.kid?.id, 3);
+    });
+
+    test('an expired session drops back to a guest, but being offline does not sign an adult out', () async {
+      SharedPreferences.setMockInitialValues({'token': 'old'});
+      final expired = Api(client: MockClient((_) async => _json({'detail': 'Sign in required'}, 401)));
+      await expired.init();
+      expect(expired.token, isNull);
+
+      SharedPreferences.setMockInitialValues({'token': 'adult'});
+      final offline = Api(client: MockClient((_) async => throw Exception('no network')));
+      await offline.init();
+      expect(offline.token, 'adult');
+    });
+
+    test('leaving kids mode needs the PIN and returns the parent', () async {
+      final (api, _) = await _api((r) {
+        if (r.url.path.endsWith('/session')) return _json({'token': 'kidtok', 'child': child});
+        final body = jsonDecode(r.body);
+        return body['pin'] == '4321'
+            ? _json({'token': 'parenttok', 'user': {'username': 'mama', 'rating': 1500}})
+            : _json({'detail': 'Wrong PIN'}, 403);
+      });
+      await api.startKidSession(3);
+      await expectLater(api.exitKidsMode('0000'), throwsA(isA<ApiError>()));
+      expect(api.kid, isNotNull);
+      await api.exitKidsMode('4321');
+      expect(api.kid, isNull);
+      expect(api.user?.username, 'mama');
+      expect(api.token, 'parenttok');
+    });
+  });
 }

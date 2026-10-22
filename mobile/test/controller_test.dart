@@ -91,4 +91,16 @@ void main() {
     expect(g.error, 'nope');
     g.dispose();
   });
+
+  test('kids games flag the chat and show only the other side preset phrase', () async {
+    final g = await _controller('white');
+    g.handleMessage({'type': 'resync', 'you': 'white', ..._snapshot(), 'kids': true});
+    expect(g.kids, true);
+    g.handleMessage({'type': 'said', 'by': 'white', 'id': 'gl'}); // our own echo
+    expect(g.opponentPhrase, isNull);
+    g.handleMessage({'type': 'said', 'by': 'black', 'id': 'gg'});
+    expect(g.opponentPhrase, 'gg');
+    expect(g.opponentPhraseAt, isNotNull);
+    g.dispose();
+  });
 }
