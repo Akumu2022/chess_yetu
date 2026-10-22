@@ -190,9 +190,15 @@ test('rated quick match: sign up, pair, play to checkmate, ratings update', asyn
 	await expect(white.page.getByText(`(1500)`).first()).toBeVisible();
 
 	// fool's mate: black wins
-	await move(white.page, 'f2', 'f3');
-	await move(black.page, 'e7', 'e5');
-	await move(white.page, 'g2', 'g4');
+	// wait for each move to reach both boards so the next click is never sent out of turn
+	const play = async (mover: typeof white, other: typeof white, from: string, to: string, kind: string) => {
+		await move(mover.page, from, to);
+		await expect(piece(mover.page, to, kind)).toHaveCount(1);
+		await expect(piece(other.page, to, kind)).toHaveCount(1);
+	};
+	await play(white, black, 'f2', 'f3', 'wp');
+	await play(black, white, 'e7', 'e5', 'bp');
+	await play(white, black, 'g2', 'g4', 'wp');
 	await move(black.page, 'd8', 'h4');
 
 	await expect(black.page.getByText('You won by checkmate')).toBeVisible();
