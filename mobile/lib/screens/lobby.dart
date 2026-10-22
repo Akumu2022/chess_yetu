@@ -59,8 +59,11 @@ class _LobbyScreenState extends State<LobbyScreen> {
     }
   }
 
-  Future<void> _open(Seat seat, {String? shareCode}) async {
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => GameScreen(api: api, seat: seat, shareCode: shareCode)));
+  Future<void> _open(Seat seat, {String? shareCode, Future<(Seat, String?)> Function()? again}) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => GameScreen(api: api, seat: seat, shareCode: shareCode, again: again)),
+    );
     if (mounted) {
       api.refreshUser().catchError((_) {});
       setState(() {}); // refresh the recent-games list
@@ -70,13 +73,20 @@ class _LobbyScreenState extends State<LobbyScreen> {
   (int, int) get _tc => _clocks[_clock];
 
   Future<void> _playBot() => _guard(() async {
-        final s = await api.newBotGame(level: _level + 1, color: _color, minutes: _tc.$1, increment: _tc.$2);
-        await _open(s);
+        final level = _level + 1, color = _color, tc = _tc;
+        Future<(Seat, String?)> start() async =>
+            (await api.newBotGame(level: level, color: color, minutes: tc.$1, increment: tc.$2), null);
+        await _open((await start()).$1, again: start);
       });
 
   Future<void> _friend() => _guard(() async {
-        final s = await api.newFriendGame(minutes: _tc.$1, increment: _tc.$2);
-        await _open(s, shareCode: s.gameId);
+        final tc = _tc;
+        Future<(Seat, String?)> start() async {
+          final s = await api.newFriendGame(minutes: tc.$1, increment: tc.$2);
+          return (s, s.gameId);
+        }
+        final (s, code) = await start();
+        await _open(s, shareCode: code, again: start);
       });
 
   Future<void> _join() => _guard(() async {

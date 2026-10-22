@@ -7,6 +7,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'api.dart';
 import 'board.dart';
+import 'replay.dart' as rp;
 
 const protocolVersion = 1;
 const startFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -50,6 +51,18 @@ class GameController extends ChangeNotifier {
     var ms = _clocks[color] ?? 0;
     if (status == 'active' && color == turn) ms -= DateTime.now().difference(_clocksAt).inMilliseconds;
     return ms < 0 ? 0 : ms;
+  }
+
+  rp.Replay? _replay;
+  int _replayLen = -1;
+
+  /// Notation and captures for the moves so far; recomputed only when a move has been added.
+  rp.Replay get replay {
+    if (_replay == null || _replayLen != moves.length) {
+      _replay = rp.replay(moves);
+      _replayLen = moves.length;
+    }
+    return _replay!;
   }
 
   String? get lastMove => moves.isEmpty ? null : moves.last;
