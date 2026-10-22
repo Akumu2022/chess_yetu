@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import '../lib/prefs.svelte'; // applies the saved display choices as soon as the app starts
+	import TextureDefs from '../lib/TextureDefs.svelte';
 
 	let { children } = $props();
 
@@ -10,6 +11,7 @@
 	});
 </script>
 
+<TextureDefs />
 {@render children()}
 
 <style global>
@@ -72,7 +74,7 @@
 		--shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
 	}
 
-	/* Board colours (squares) */
+	/* Board colours (squares); kept in step with BOARDS in prefs.svelte.ts */
 	:global(:root),
 	:global(:root[data-board='classic']) {
 		--sq-light: #f0d9b5;
@@ -97,6 +99,70 @@
 	:global(:root[data-board='savanna']) {
 		--sq-light: #f6e7b8;
 		--sq-dark: #c47a2c;
+	}
+	:global(:root[data-board='blue']) {
+		--sq-light: #eaf0f6;
+		--sq-dark: #4f7cac;
+	}
+	:global(:root[data-board='coral']) {
+		--sq-light: #fce8e0;
+		--sq-dark: #e07a5f;
+	}
+	:global(:root[data-board='rose']) {
+		--sq-light: #f8e5ea;
+		--sq-dark: #c9718a;
+	}
+	:global(:root[data-board='sand']) {
+		--sq-light: #f5efe0;
+		--sq-dark: #bfae8b;
+	}
+	:global(:root[data-board='newspaper']) {
+		--sq-light: #ffffff;
+		--sq-dark: #a9a9a9;
+	}
+	:global(:root[data-board='midnight']) {
+		--sq-light: #6e86a8;
+		--sq-dark: #1e2f4d;
+	}
+	:global(:root[data-board='contrast']) {
+		--sq-light: #ffffff;
+		--sq-dark: #111111;
+	}
+	:global(:root[data-board='gold']) {
+		--sq-light: #f2c14e;
+		--sq-dark: #1b1b1b;
+	}
+	:global(:root[data-board='tournament']) {
+		--sq-light: #ebecd0;
+		--sq-dark: #739552;
+	}
+	:global(:root[data-board='crimson']) {
+		--sq-light: #f3e1da;
+		--sq-dark: #9b2d30;
+	}
+	:global(:root[data-board='maple']) {
+		--sq-light: #ebcfa0;
+		--sq-dark: #b07a45;
+	}
+	:global(:root[data-board='walnut']) {
+		--sq-light: #d2a877;
+		--sq-dark: #5b3a29;
+	}
+	:global(:root[data-board='ebony']) {
+		--sq-light: #c9a57a;
+		--sq-dark: #2e2118;
+	}
+	:global(:root[data-board='marble']) {
+		--sq-light: #ededed;
+		--sq-dark: #8b8f96;
+	}
+	:global(:root[data-board='onyx']) {
+		--sq-light: #d8d5cf;
+		--sq-dark: #2b2b30;
+	}
+	:global(:root[data-board='jade']) {
+		--sq-light: #dce8da;
+		--sq-dark: #5e8c6a;
 	}
 
 	/* Piece colours */

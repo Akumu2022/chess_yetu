@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Chess } from 'chess.js';
 	import { prefs } from './prefs.svelte';
+	import { TEXTURES } from './textures';
 
 	let {
 		fen,
@@ -120,7 +121,17 @@
 	const PROMO_PIECES = ['q', 'r', 'b', 'n'];
 </script>
 
-<svg viewBox="0 0 8 8" class="board" class:animate={prefs.animate} role="grid" aria-label="Chess board">
+<svg
+	viewBox={prefs.frame ? '-0.42 -0.42 8.84 8.84' : '0 0 8 8'}
+	class="board"
+	class:animate={prefs.animate}
+	class:framed={prefs.frame}
+	role="grid"
+	aria-label="Chess board"
+>
+	{#if prefs.frame}
+		<rect x="-0.42" y="-0.42" width="8.84" height="8.84" rx="0.12" class="frame" pointer-events="none" />
+	{/if}
 	{#each squares as s (s.name)}
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<rect
@@ -145,6 +156,10 @@
 		{/if}
 	{/each}
 
+	{#each TEXTURES[prefs.surface] ?? [] as t (t.filter)}
+		<rect x="0" y="0" width="8" height="8" class="tex" filter="url(#{t.filter})" opacity={t.opacity} data-texture={prefs.surface} pointer-events="none" />
+	{/each}
+
 	{#each pieces as p (p.id)}
 		<g class="mover" style="transform: translate({p.x}px, {p.y}px)" pointer-events="none">
 			<text
@@ -164,13 +179,24 @@
 		<circle cx={q.x + 0.5} cy={q.y + 0.5} r="0.16" class="hint" pointer-events="none" />
 	{/each}
 
+	{#if prefs.frame && prefs.coords}
+		{#each squares as s (s.name)}
+			{#if s.y === 7}
+				<text x={s.x + 0.5} y="8.24" text-anchor="middle" class="coord-out" pointer-events="none">{s.name[0]}</text>
+			{/if}
+			{#if s.x === 0}
+				<text x="-0.21" y={s.y + 0.5} text-anchor="middle" dominant-baseline="central" class="coord-out" pointer-events="none">{s.name[1]}</text>
+			{/if}
+		{/each}
+	{/if}
+
 	{#each squares as s (s.name)}
-		{#if prefs.coords && s.x === 0}
+		{#if prefs.coords && !prefs.frame && s.x === 0}
 			<text x="0.05" y={s.y + 0.22} class="coord {s.dark ? 'on-dark' : 'on-light'}" pointer-events="none"
 				>{s.name[1]}</text
 			>
 		{/if}
-		{#if prefs.coords && s.y === 7}
+		{#if prefs.coords && !prefs.frame && s.y === 7}
 			<text x={s.x + 0.95} y="7.92" text-anchor="end" class="coord {s.dark ? 'on-dark' : 'on-light'}" pointer-events="none"
 				>{s.name[0]}</text
 			>
@@ -263,6 +289,16 @@
 	.piece.b {
 		fill: var(--pc-b);
 		stroke: var(--pc-b-line);
+	}
+	.frame {
+		fill: #2a211a;
+		fill: color-mix(in srgb, var(--sq-dark) 55%, #000);
+	}
+	.coord-out {
+		fill: rgba(255, 255, 255, 0.78);
+		font-size: 0.28px;
+		font-family: sans-serif;
+		font-weight: 700;
 	}
 	.coord {
 		font-size: 0.22px;

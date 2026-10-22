@@ -1,15 +1,18 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { joinGame, KID_PHRASES, loadSeat, saveSeat, type Seat } from '../../../lib/api';
+	import { createBotGame, joinGame, KID_PHRASES, loadSeat, saveSeat, type BotColor, type Seat } from '../../../lib/api';
 	import { GameClient } from '../../../lib/gameClient.svelte';
 	import { figurine } from '../../../lib/captured';
 	import Board from '#lib/Board.svelte';
 	import CapturedPieces from '#lib/CapturedPieces.svelte';
+	import ResultCard from '#lib/ResultCard.svelte';
 
 	let game = $state<GameClient | null>(null);
 	let failure = $state('');
 	let copied = $state(false);
+	// the game-over card; closing it leaves the final board and a slim bar with the same options
+	let cardOpen = $state(true);
 	const id = page.params.id!;
 
 	onMount(async () => {
@@ -79,6 +82,45 @@
 		if (g.result === '1/2-1/2') return `Draw ${why}`;
 		const winner = g.result === '1-0' ? 'white' : 'black';
 		return `${winner === g.you ? 'You won' : 'You lost'} ${why}`;
+	}
+
+	/** The pieces of the result card: headline, reason, and who won. */
+	function card(g: GameClient) {
+		const won = g.result === '1-0' ? 'white' : g.result === '0-1' ? 'black' : null;
+		const kind: 'win' | 'loss' | 'draw' = won === null ? 'draw' : won === g.you ? 'win' : 'loss';
+		const why = REASONS[g.reason ?? ''] ?? g.reason ?? '';
+		const headline = g.kids ? kidOutcome(g) : kind === 'win' ? 'You won!' : kind === 'loss' ? 'You lost' : 'Draw';
+		const d = g.ratingChange ? g.ratingChange[g.you] : null;
+		const mine = g.players[g.you]?.rating ?? null;
+		return {
+			kind,
+			headline,
+			detail: g.kids ? '' : why,
+			sentence: outcome(g),
+			delta: d,
+			ratingNow: d !== null && mine ? Math.round(mine + d) : null
+		};
+	}
+
+	// "Rematch" for games against the computer: the lobby remembers the settings it used last.
+	function lastBot(): { level: number; color: BotColor; minutes: number; increment: number } | null {
+		try {
+			return JSON.parse(sessionStorage.getItem('chess_yetu:lastBot') ?? 'null');
+		} catch {
+			return null;
+		}
+	}
+	async function rematch() {
+		const s = lastBot();
+		if (!s) return;
+		try {
+			const seat = await createBotGame(s.level, s.color, s.minutes, s.increment);
+			saveSeat(seat);
+			// a full load, because this page reads the game id once when it opens
+			location.assign(`/game/${seat.game_id}`);
+		} catch (e) {
+			game!.error = e instanceof Error ? e.message : 'Could not start a new game';
+		}
 	}
 
 	function label(g: GameClient, color: 'white' | 'black', fallback: string) {
@@ -196,6 +238,26 @@
 				<p>Waiting for an opponent. Share this link or code <b>{id}</b>:</p>
 				<button onclick={copyLink}>{copied ? 'Copied!' : 'Copy game link'}</button>
 			</div>
+		{:else if game.status === 'over' && cardOpen}
+			{@const c = card(game)}
+			<ResultCard
+				outcome={c.kind}
+				headline={c.headline}
+				detail={c.detail}
+				sentence={c.sentence}
+				score={game.result ?? ''}
+				you={game.players[game.you]}
+				opponent={game.players[opp]}
+				delta={c.delta}
+				ratingNow={c.ratingNow}
+				kids={game.kids}
+				casual={game.rated === false}
+				reviewHref={!game.kids && game.moves.length > 0 ? `/review/${id}` : null}
+				onRematch={game.vsBot && !game.kids && lastBot() ? rematch : null}
+				newHref={game.tournament ? `/tournaments/${game.tournament}` : game.kids ? '/kids' : '/'}
+				newLabel={game.tournament ? 'Back to tournament' : game.kids ? 'Play again' : 'New game'}
+				onclose={() => (cardOpen = false)}
+			/>
 		{:else if game.status === 'over'}
 			<div class="panel over">
 				<div>
@@ -212,6 +274,7 @@
 					{/if}
 				</div>
 				<div class="after">
+					<button class="show" onclick={() => (cardOpen = true)}>Show result</button>
 					{#if !game.kids && game.moves.length > 0}<a class="review" href="/review/{id}">Review game</a>{/if}
 					{#if game.tournament}
 						<a class="back-to" href="/tournaments/{game.tournament}">Back to tournament</a>
@@ -377,6 +440,16 @@
 	.after {
 		display: flex;
 		gap: 14px;
+	}
+	.after .show {
+		flex: none;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--accent-text);
+		text-decoration: underline;
+		font: inherit;
+		cursor: pointer;
 	}
 	.actions {
 		display: flex;

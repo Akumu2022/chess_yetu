@@ -148,6 +148,12 @@
 
 	async function playComputer() {
 		if (searching) await cancelSearch();
+		try {
+			sessionStorage.setItem(
+				'chess_yetu:lastBot',
+				JSON.stringify({ level: botLevel, color: botColor, minutes, increment })
+			);
+		} catch {}
 		await run(() => createBotGame(botLevel, botColor, minutes, increment));
 	}
 

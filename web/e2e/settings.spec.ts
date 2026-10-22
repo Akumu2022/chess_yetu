@@ -69,3 +69,59 @@ test('move dots, last-move tint and coordinates can be switched off', async ({ b
 	await page.waitForURL(/\/$/);
 	await ctx.close();
 });
+
+test('wood and marble boards draw a texture, flat colours do not, and the choice survives a reload', async ({ browser }) => {
+	const { ctx, page } = await newPlayer(browser);
+	await open(page, '/settings');
+	await expect(page.locator('svg.board rect.tex')).toHaveCount(0); // classic is flat
+
+	await page.getByRole('button', { name: 'Walnut wood' }).click();
+	expect(await root(page, 'board')).toBe('walnut');
+	await expect(page.locator('svg.board rect.tex[data-texture="wood"]')).toHaveCount(1);
+
+	await page.getByRole('button', { name: 'Onyx marble' }).click();
+	await expect(page.locator('svg.board rect.tex[data-texture="marble"]')).toHaveCount(2);
+	await expect(page.locator('svg.board rect.tex[data-texture="wood"]')).toHaveCount(0);
+
+	await page.reload();
+	await page.locator('body[data-hydrated="true"]').waitFor();
+	expect(await root(page, 'board')).toBe('onyx');
+	await expect(page.locator('svg.board rect.tex[data-texture="marble"]')).toHaveCount(2);
+
+	await page.getByRole('button', { name: 'Green', exact: true }).click();
+	await expect(page.locator('svg.board rect.tex')).toHaveCount(0);
+	await ctx.close();
+});
+
+test('there are 22 board styles to choose from, in groups', async ({ browser }) => {
+	const { ctx, page } = await newPlayer(browser);
+	await open(page, '/settings');
+	await expect(page.locator('.board-swatch')).toHaveCount(22);
+	for (const group of ['Colours', 'Bold', 'Wood', 'Marble']) {
+		await expect(page.getByRole('group', { name: `Board style: ${group}` })).toBeVisible();
+	}
+	await ctx.close();
+});
+
+test('a framed board puts the letters and numbers outside the squares', async ({ browser }) => {
+	const { ctx, page } = await newPlayer(browser);
+	await open(page, '/settings');
+	await expect(page.locator('svg.board')).toHaveAttribute('viewBox', '0 0 8 8');
+	await expect(page.locator('svg.board text.coord')).toHaveCount(16); // inside the squares
+
+	await page.getByLabel(/Framed board/).check();
+	await expect(page.locator('svg.board')).toHaveAttribute('viewBox', /^-0\.42/);
+	await expect(page.locator('svg.board rect.frame')).toHaveCount(1);
+	await expect(page.locator('svg.board text.coord-out')).toHaveCount(16);
+	await expect(page.locator('svg.board text.coord')).toHaveCount(0);
+	await expect(sq(page, 'a1')).toBeVisible(); // squares still work as before
+
+	await page.reload();
+	await page.locator('body[data-hydrated="true"]').waitFor();
+	await expect(page.locator('svg.board rect.frame')).toHaveCount(1);
+
+	await page.getByLabel('Show letters and numbers on the edge').uncheck();
+	await expect(page.locator('svg.board text.coord-out')).toHaveCount(0);
+	await ctx.close();
+});
+

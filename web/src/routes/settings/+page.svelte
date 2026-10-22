@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { Chess } from 'chess.js';
 	import Board from '../../lib/Board.svelte';
+	import BoardSwatch from '../../lib/BoardSwatch.svelte';
 	import { BOARDS, PIECES, THEMES, prefs } from '../../lib/prefs.svelte';
+
+	const GROUPS = [...new Set(BOARDS.map((b) => b.group))];
 
 	// A sample position to try the choices on. Tap a piece to see the move dots.
 	const fen = 'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 4 4';
@@ -32,15 +35,18 @@
 	</section>
 
 	<section class="card">
-		<h2>Board colours</h2>
-		<div class="swatches" role="group" aria-label="Board colours">
-			{#each BOARDS as b}
-				<button class="swatch" class:active={prefs.board === b.id} onclick={() => prefs.set('board', b.id)} aria-label={b.name} aria-pressed={prefs.board === b.id}>
-					<span class="sq" style="background:linear-gradient(90deg,{b.light} 50%,{b.dark} 50%)"></span>
-					<span>{b.name}</span>
-				</button>
-			{/each}
-		</div>
+		<h2>Board style</h2>
+		{#each GROUPS as g}
+			<h3>{g}</h3>
+			<div class="swatches" role="group" aria-label="Board style: {g}">
+				{#each BOARDS.filter((b) => b.group === g) as b}
+					<button class="swatch board-swatch" class:active={prefs.board === b.id} onclick={() => prefs.set('board', b.id)} aria-label={b.name} aria-pressed={prefs.board === b.id}>
+						<BoardSwatch light={b.light} dark={b.dark} surface={b.surface} />
+						<span>{b.name}</span>
+					</button>
+				{/each}
+			</div>
+		{/each}
 	</section>
 
 	<section class="card">
@@ -63,6 +69,7 @@
 		<label class="row"><input type="checkbox" checked={prefs.hints} onchange={(e) => prefs.set('hints', e.currentTarget.checked)} /> Show dots where a piece can move</label>
 		<label class="row"><input type="checkbox" checked={prefs.lastMove} onchange={(e) => prefs.set('lastMove', e.currentTarget.checked)} /> Highlight the last move</label>
 		<label class="row"><input type="checkbox" checked={prefs.animate} onchange={(e) => prefs.set('animate', e.currentTarget.checked)} /> Slide pieces when they move</label>
+		<label class="row"><input type="checkbox" checked={prefs.frame} onchange={(e) => prefs.set('frame', e.currentTarget.checked)} /> Framed board, with the letters and numbers outside</label>
 		<label class="row"><input type="checkbox" checked={prefs.coords} onchange={(e) => prefs.set('coords', e.currentTarget.checked)} /> Show letters and numbers on the edge</label>
 	</section>
 
@@ -139,10 +146,19 @@
 		padding: 8px 4px;
 		font-size: 0.8rem;
 	}
-	.sq {
-		width: 100%;
-		height: 28px;
-		border-radius: 6px;
+	.board-swatch {
+		padding: 6px;
+	}
+	h3 {
+		margin: 14px 0 6px;
+		font-size: 0.8rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--muted);
+	}
+	h3:first-of-type {
+		margin-top: 4px;
 	}
 	.pc {
 		display: flex;
