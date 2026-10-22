@@ -7,6 +7,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'api.dart';
 import 'board.dart';
+import 'cues.dart';
 import 'replay.dart' as rp;
 
 const protocolVersion = 1;
@@ -16,8 +17,9 @@ const startFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 class GameController extends ChangeNotifier {
   final Api api;
   final Seat seat;
-  GameController(this.api, this.seat) {
-    _connect();
+  /// [connect] is false in tests, which feed messages to [handleMessage] directly.
+  GameController(this.api, this.seat, {bool connect = true}) {
+    if (connect) _connect();
     _timer = Timer.periodic(const Duration(milliseconds: 250), (_) {
       if (status == 'active') notifyListeners();
       _pingCount++;
@@ -73,7 +75,7 @@ class GameController extends ChangeNotifier {
       await c.ready;
       if (_disposed) return c.sink.close();
       _ch = c;
-      _sub = c.stream.listen(_onMessage, onDone: _onClosed, onError: (_) => _onClosed());
+      _sub = c.stream.listen((raw) => handleMessage(jsonDecode(raw as String)), onDone: _onClosed, onError: (_) => _onClosed());
       _send({'type': 'hello', 'v': protocolVersion, 'token': seat.token});
     } catch (_) {
       _onClosed();
@@ -115,8 +117,8 @@ class GameController extends ChangeNotifier {
     _clocksAt = DateTime.now();
   }
 
-  void _onMessage(dynamic raw) {
-    final m = jsonDecode(raw as String) as Map<String, dynamic>;
+  @visibleForTesting
+  void handleMessage(Map<String, dynamic> m) {
     switch (m['type']) {
       case 'resync':
         _retries = 0;
@@ -126,11 +128,15 @@ class GameController extends ChangeNotifier {
       case 'game_started':
         _loadSnapshot(m);
       case 'move_made':
-        if ((m['seq'] as int) > moves.length) _apply(m['move']);
+        if ((m['seq'] as int) > moves.length) {
+          _apply(m['move']);
+          _cue();
+        }
         _setClocks(m['clocks']);
         drawOffer = null;
         drawDeclined = false;
       case 'game_over':
+        if (status != 'over') Cues.instance.play(Cue.end);
         status = 'over';
         result = m['result'];
         reason = m['reason'];
@@ -152,6 +158,12 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Sound and vibration for the move just added.
+  void _cue() {
+    final san = replay.san;
+    if (san.isNotEmpty) Cues.instance.play(Cues.forSan(san.last));
+  }
+
   void _apply(String uci) {
     engine.move({
       'from': uci.substring(0, 2),
@@ -169,6 +181,7 @@ class GameController extends ChangeNotifier {
     final uci = '$from$to${promotion ?? ''}';
     final seq = moves.length + 1;
     _apply(uci); // optimistic; the server echo is ignored by seq
+    _cue();
     _send({'type': 'move', 'seq': seq, 'move': uci});
     notifyListeners();
   }

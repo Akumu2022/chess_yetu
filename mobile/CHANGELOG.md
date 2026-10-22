@@ -3,6 +3,11 @@
 Versions follow `pubspec.yaml` (`name+build`). Bump both parts for every release, add an entry here,
 and tag the commit `mobile-v<version>`. The version is shown at the bottom of the lobby.
 
+## 0.6.0+6
+- Create arenas from the app (name, time control, start time, duration).
+- Move sounds (move, capture, check, game end) and vibration, each switchable in Settings.
+- Test suite grown from 5 to 20 tests: API client, game controller, board, settings and lobby.
+
 ## 0.5.0+5
 - Arenas (tournaments): list, join or leave, live standings, and automatic pairing that opens your game.
 - Player profiles (from the leaderboard or arena standings): rating, rank, record and recent rated games.

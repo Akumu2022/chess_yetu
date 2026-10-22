@@ -24,7 +24,7 @@ class Prefs extends ChangeNotifier {
 
   SharedPreferences? _p;
   String boardId = 'classic';
-  bool hints = true, coords = true, lastMove = true;
+  bool hints = true, coords = true, lastMove = true, sound = true, haptics = true;
 
   BoardColors get board => boardThemes.firstWhere((b) => b.id == boardId, orElse: () => boardThemes.first);
 
@@ -34,17 +34,23 @@ class Prefs extends ChangeNotifier {
     hints = _p!.getBool('hints') ?? hints;
     coords = _p!.getBool('coords') ?? coords;
     lastMove = _p!.getBool('lastMove') ?? lastMove;
+    sound = _p!.getBool('sound') ?? sound;
+    haptics = _p!.getBool('haptics') ?? haptics;
   }
 
-  void set({String? board, bool? hints, bool? coords, bool? lastMove}) {
+  void set({String? board, bool? hints, bool? coords, bool? lastMove, bool? sound, bool? haptics}) {
     boardId = board ?? boardId;
     this.hints = hints ?? this.hints;
     this.coords = coords ?? this.coords;
     this.lastMove = lastMove ?? this.lastMove;
+    this.sound = sound ?? this.sound;
+    this.haptics = haptics ?? this.haptics;
     _p?.setString('board', boardId);
     _p?.setBool('hints', this.hints);
     _p?.setBool('coords', this.coords);
     _p?.setBool('lastMove', this.lastMove);
+    _p?.setBool('sound', this.sound);
+    _p?.setBool('haptics', this.haptics);
     notifyListeners();
   }
 }

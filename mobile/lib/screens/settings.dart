@@ -44,6 +44,8 @@ class SettingsScreen extends StatelessWidget {
           ),
           SwitchListTile(title: const Text('Highlight the last move'), value: p.lastMove, onChanged: (v) => p.set(lastMove: v)),
           SwitchListTile(title: const Text('Show coordinates'), value: p.coords, onChanged: (v) => p.set(coords: v)),
+          SwitchListTile(title: const Text('Move sounds'), value: p.sound, onChanged: (v) => p.set(sound: v)),
+          SwitchListTile(title: const Text('Vibrate on moves'), value: p.haptics, onChanged: (v) => p.set(haptics: v)),
         ]),
       ),
     );

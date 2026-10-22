@@ -26,6 +26,9 @@ class User {
 
 /// Talks to the Chess Yetu API. One instance for the whole app.
 class Api extends ChangeNotifier {
+  /// [client] is injectable so tests can answer requests without a server.
+  Api({http.Client? client}) : _http = client ?? http.Client();
+  final http.Client _http;
   static const _kUrl = 'server_url', _kToken = 'token';
 
   late SharedPreferences _prefs;
@@ -68,9 +71,9 @@ class Api extends ChangeNotifier {
     final uri = Uri.parse('$baseUrl$path');
     try {
       final send = switch (method) {
-        'GET' => http.get(uri, headers: headers),
-        'DELETE' => http.delete(uri, headers: headers),
-        _ => http.post(uri, headers: headers, body: jsonEncode(body ?? {})),
+        'GET' => _http.get(uri, headers: headers),
+        'DELETE' => _http.delete(uri, headers: headers),
+        _ => _http.post(uri, headers: headers, body: jsonEncode(body ?? {})),
       };
       final r = await send.timeout(const Duration(seconds: 10));
       final data = r.body.isEmpty ? null : jsonDecode(r.body);
@@ -166,5 +169,22 @@ class Api extends ChangeNotifier {
   Future<Seat?> tournamentPoll(int id) async {
     final r = await _req('GET', '/tournaments/$id/me');
     return r['status'] == 'matched' ? Seat.fromJson(r['seat']) : null;
+  }
+
+  Future<int> createTournament({
+    required String name,
+    required int minutes,
+    required int increment,
+    required int startsInMin,
+    required int durationMin,
+  }) async {
+    final r = await _req('POST', '/tournaments', body: {
+      'name': name,
+      'minutes': minutes,
+      'increment': increment,
+      'starts_in_min': startsInMin,
+      'duration_min': durationMin,
+    });
+    return r['id'];
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import 'game.dart';
+import 'new_arena.dart';
 import 'profile.dart';
 
 const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -30,9 +31,24 @@ class TournamentsScreen extends StatefulWidget {
 class _TournamentsScreenState extends State<TournamentsScreen> {
   late Future<List<dynamic>> _future = widget.api.tournaments();
 
+  Future<void> _create() async {
+    final id = await Navigator.push<int>(context, MaterialPageRoute(builder: (_) => NewArenaScreen(api: widget.api)));
+    if (!mounted || id == null) return;
+    setState(() => _future = widget.api.tournaments());
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => TournamentScreen(api: widget.api, id: id)));
+    if (mounted) setState(() => _future = widget.api.tournaments());
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Arenas')),
+        appBar: AppBar(title: const Text('Arenas'), actions: [
+          if (widget.api.user != null)
+            IconButton(
+              tooltip: 'Create an arena',
+              icon: const Icon(Icons.add),
+              onPressed: _create,
+            ),
+        ]),
         body: RefreshIndicator(
           onRefresh: () async {
             setState(() => _future = widget.api.tournaments());
@@ -46,7 +62,7 @@ class _TournamentsScreenState extends State<TournamentsScreen> {
               final items = snap.data!;
               if (items.isEmpty) {
                 return ListView(children: const [
-                  Padding(padding: EdgeInsets.all(24), child: Text('No arenas yet. Create one on the website.')),
+                  Padding(padding: EdgeInsets.all(24), child: Text('No arenas yet. Tap + to create one.')),
                 ]);
               }
               return ListView(children: [
