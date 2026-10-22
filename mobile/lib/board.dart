@@ -1,3 +1,4 @@
+import 'package:chess/chess.dart' as ch;
 import 'package:flutter/material.dart';
 
 const _glyph = {'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'};
@@ -18,6 +19,15 @@ Map<String, String> piecesFromFen(String fen) {
         f++;
       }
     }
+  }
+  return out;
+}
+
+/// Legal destinations for the piece on [from], each mapped to whether the move is a promotion.
+Map<String, bool> legalTargets(ch.Chess engine, String from) {
+  final out = <String, bool>{};
+  for (final mv in engine.moves({'verbose': true})) {
+    if (mv['from'] == from) out[mv['to'] as String] = (mv['san'] as String).contains('=');
   }
   return out;
 }

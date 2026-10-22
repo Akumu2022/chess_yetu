@@ -5,7 +5,10 @@ import 'package:flutter/services.dart';
 
 import '../api.dart';
 import 'game.dart';
+import 'leaderboard.dart';
 import 'login.dart';
+import 'puzzle.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 const _levels = ['Beginner', 'Easy', 'Medium', 'Hard', 'Master'];
 const _clocks = [(3, 2), (5, 0), (10, 0), (10, 5), (15, 10)];
@@ -230,7 +233,28 @@ class _LobbyScreenState extends State<LobbyScreen> {
             ]),
           ),
         ),
+        const SizedBox(height: 12),
+        Row(children: [
+          if (u != null)
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PuzzleScreen(api: api))),
+                icon: const Icon(Icons.extension),
+                label: const Text('Puzzles'),
+              ),
+            ),
+          if (u != null) const SizedBox(width: 12),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LeaderboardScreen(api: api))),
+              icon: const Icon(Icons.leaderboard),
+              label: const Text('Leaderboard'),
+            ),
+          ),
+        ]),
         if (u != null) _History(api: api, key: ValueKey(u.rating)),
+        const SizedBox(height: 24),
+        const _VersionLabel(),
       ]),
     );
   }
@@ -274,4 +298,22 @@ class _History extends StatelessWidget {
 void copyCode(BuildContext context, String text) {
   Clipboard.setData(ClipboardData(text: text));
   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Code copied')));
+}
+
+/// "Chess Yetu v0.2.0 (2)", read from pubspec.yaml so it always matches the installed build.
+class _VersionLabel extends StatelessWidget {
+  const _VersionLabel();
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<PackageInfo>(
+        future: PackageInfo.fromPlatform(),
+        builder: (context, snap) => snap.hasData
+            ? Center(
+                child: Text(
+                  'Chess Yetu v${snap.data!.version} (${snap.data!.buildNumber})',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              )
+            : const SizedBox(),
+      );
 }

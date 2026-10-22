@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'api.dart';
+import 'board.dart';
 
 const protocolVersion = 1;
 const startFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -148,13 +149,7 @@ class GameController extends ChangeNotifier {
   }
 
   /// Legal destination squares for the piece on [from], each mapped to whether it needs a promotion choice.
-  Map<String, bool> legalFrom(String from) {
-    final out = <String, bool>{};
-    for (final mv in engine.moves({'verbose': true})) {
-      if (mv['from'] == from) out[mv['to'] as String] = (mv['san'] as String).contains('=');
-    }
-    return out;
-  }
+  Map<String, bool> legalFrom(String from) => legalTargets(engine, from);
 
   void playMove(String from, String to, [String? promotion]) {
     if (!myTurn) return;

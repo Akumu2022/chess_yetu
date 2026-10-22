@@ -135,4 +135,13 @@ class Api extends ChangeNotifier {
   Future<void> leaveQueue() async => _req('DELETE', '/queue');
 
   Future<List<dynamic>> myGames() async => await _req('GET', '/me/games');
+
+  Future<List<dynamic>> leaderboard() async => (await _req('GET', '/leaderboard'))['players'];
+
+  /// Next puzzle plus today's progress, or a map with `limit_reached` once the day's puzzles are done.
+  Future<Map<String, dynamic>> nextPuzzle() async => Map<String, dynamic>.from(await _req('GET', '/puzzles/next'));
+
+  /// `status` is wrong | continue (with the opponent's `reply`) | solved.
+  Future<Map<String, dynamic>> puzzleMove(int id, List<String> played) async =>
+      Map<String, dynamic>.from(await _req('POST', '/puzzles/$id/move', body: {'played': played}));
 }
